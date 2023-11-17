@@ -1,0 +1,24 @@
+Setting Up Front End
+
+###  Make sure docker is installed
+```docker -v```
+
+
+### To installe
+```brew intall docker```
+
+### To Build Client (From root directory)
+```docker build -t blockchain-client . ```
+
+## To Run 
+```docker run -p 8080:8080 blockchain-client```
+
+
+
+
+
+
+
+
+
+
