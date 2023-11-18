@@ -1,15 +1,16 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <BlockChainManager/>
+  <v-btn></v-btn>
+ 
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import BlockChainManager from './components/BlockChainManager.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    BlockChainManager,
   }
 }
 </script>

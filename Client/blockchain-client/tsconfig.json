@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "target": "esnext",
+      "module": "esnext",
+      "strict": true,
+      "jsx": "preserve",
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "strictPropertyInitialization": false,
+      "noImplicitAny": false,
+      "paths": {
+        "@/*": [
+          "src/*"
+        ]
+      },
+    }
+  }
+  
