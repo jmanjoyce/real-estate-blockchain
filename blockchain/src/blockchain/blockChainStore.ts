@@ -4,7 +4,7 @@ import BlockChain from './blockChain'
 
 
 export const mineNewBlock = () => {
-    var blockChain = require('../app');
+    var blockChain: BlockChain = require('../app');
     blockChain.newBlock();
 
 }
@@ -37,7 +37,7 @@ export const startBlockChain = (req: any, res: any) => {
     //     return
     // }
     
-    blockChain = new BlockChain();
+    blockChain = new BlockChain([]);
     console.log(blockChain);
     res.send('Success');
 

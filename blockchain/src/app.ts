@@ -11,7 +11,7 @@ app.listen(PORT, () => {
 
 
 
-var blockChain: BlockChain = new BlockChain();
+var blockChain: BlockChain = new BlockChain([]);
 module.exports = blockChain;
 
 

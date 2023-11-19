@@ -1,20 +1,43 @@
 <template>
-  <BlockChainManager/>
-  <v-btn></v-btn>
- 
+  <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
+  
+  <div>
+    <BlockChainManager :machines="nodes"></BlockChainManager>
+    
+  </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import BlockChainManager from './components/BlockChainManager.vue'
+import { Node } from './common'
+const data = require('./assets/nodes.json');
 
-export default {
+const parsedData: Node[] = JSON.parse(JSON.stringify(data));
+console.log(parsedData);
+export default defineComponent({
   name: 'App',
   components: {
     BlockChainManager,
-  }
-}
-</script>
 
+  },
+ 
+  data():{
+    nodes: Node[];
+  }
+    {
+      return {
+         nodes: parsedData,
+      }
+  },
+  
+  
+     
+
+  
+})
+
+</script>
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
