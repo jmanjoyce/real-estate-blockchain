@@ -18,7 +18,7 @@
               Location
             </th>
             <th class="text-left">
-              Status
+              Connection Status
             </th>
             <th class="text-left">
               Available
