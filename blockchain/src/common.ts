@@ -9,6 +9,7 @@ export interface Block {
 }
 
 export interface TransactionData {
+    id?:string,
     previousOwner?: string,
     newOwner: string,
     adress: string,

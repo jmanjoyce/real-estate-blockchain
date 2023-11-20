@@ -1,16 +1,30 @@
 
 import { TransactionData } from '../common';
-import BlockChain from './blockChain'
+import BlockChain from './blockChain';
 
 
-export const mineNewBlock = () => {
+export const mineNewBlock = (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
     blockChain.newBlock();
+    res.send('mining started');
+}
 
+export const purchase = (req: any, res: any) => {
+    console.log(req.body);
+    var blockChain: BlockChain = require('../app');
+    const { name, adress, price } = req.body;
+    const transaction: TransactionData = {
+        newOwner: name,
+        adress: adress,
+        price: price,
+    }
+    blockChain.addTransaction(transaction);
+    console.log('added block');
+    res.send('Recieved');
 }
 
 export const addPeer = () => {
-
+    // Todo Implement
 }
 
 export const addTransaction = (req: any, res: any) => {

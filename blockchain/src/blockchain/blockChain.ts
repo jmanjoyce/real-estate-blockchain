@@ -19,7 +19,6 @@ class BlockChain {
     }
 
     newBlock(){
-
         // Get transaction data from neighbors; (maybe) so we don't have to synchronize block
         
         const prevBlock: Block | undefined = this.blocks.length > 0?  this.blocks[this.blocks.length - 1]:undefined;
@@ -55,11 +54,7 @@ class BlockChain {
 
         }
 
-
     }
-
-
-
 
 }
 

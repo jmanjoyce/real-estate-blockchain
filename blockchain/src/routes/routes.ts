@@ -1,8 +1,10 @@
 import express from "express";
-import { addPeer, mineNewBlock, startBlockChain } from '../blockchain/blockChainStore'
+import { addPeer, mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
+
 const router = express.Router();
+
 
 router.get('/', (req, res) => {
     res.send('Basic');
@@ -11,7 +13,12 @@ router.get('/', (req, res) => {
 /**
  * 
  */
-router.get('/mineNewBlock', mineNewBlock);
+router.post('/mineNewBlock', mineNewBlock);
+
+/**
+ * 
+ */
+router.post('/purchase', purchase);
 
 /**
  * 
