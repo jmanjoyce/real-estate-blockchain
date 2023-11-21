@@ -5,3 +5,10 @@ export interface Node {
     availability: string,
     implementingBlocking: boolean,
 }
+
+export interface Purchase {
+    name: string,
+    adress: string,
+    price: number,
+
+}

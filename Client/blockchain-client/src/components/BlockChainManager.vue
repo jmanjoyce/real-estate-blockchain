@@ -25,7 +25,6 @@
             </th>
             <th class="text-left">
               Actions
-
             </th>
 
           </tr>
@@ -36,9 +35,10 @@
             <td>{{ item.location }}</td>
             <td>{{ item.implementingBlocking }}</td>
             <td>{{ item.availability }}</td>
-            <td :v-if="item.availability">
+            <td>
               <v-btn :color="item.implementingBlocking ? 'green' : 'red'" size="small">{{
                 item.implementingBlocking ? 'Start' : 'Stop' }}</v-btn>
+              <v-btn v-if="item.implementingBlocking" size="small" color="black">Mine</v-btn>
             </td>
           </tr>
         </tbody>
@@ -51,6 +51,10 @@
       </div>
       <div class="button">
         <v-btn color='red' @click="startBlockChain">Kill Block Chain</v-btn>
+      </div>
+      <div class="button">
+        <v-btn color="purple" @click="mineNewBlock">Mine new block</v-btn>
+
       </div>
     </div>
 
@@ -69,6 +73,7 @@ import { Node } from '@/common';
 
 export default defineComponent({
   name: 'BlockChainManager',
+  emits: ['mine'],
   props: {
     machines: Object as PropType<Node[]>,
   },
@@ -88,6 +93,9 @@ export default defineComponent({
     async startBlockChain() {
       axios.get('/start')
     },
+    async mineNewBlock(){
+      this.$emit('mine', 0);
+    }
   }
 
 
