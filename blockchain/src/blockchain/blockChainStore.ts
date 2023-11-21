@@ -1,6 +1,7 @@
 
-import { TransactionData } from '../common';
+import { Block, PeerNode, TransactionData } from '../common';
 import BlockChain from './blockChain';
+import WebSocket from 'ws';
 
 
 export const mineNewBlock = (req: any, res: any) => {
@@ -8,6 +9,58 @@ export const mineNewBlock = (req: any, res: any) => {
     blockChain.newBlock();
     res.send('mining started');
 }
+
+/**
+ * Used to synchronize pending transactions this function will serve to retrieve
+ * all pending transaction from other blocks in the block chain
+ * 
+ * @returns 
+ */
+export const getPendingTransactions = ():TransactionData[] => {
+    return [];
+}
+
+/**
+ * This function will send
+ * 
+ * 
+ * @param data 
+ */
+export const sendNewTransaction = (data: TransactionData[]) => {
+
+}
+
+export const replicateTransaction = (req: any, res: any) => {
+    
+}
+
+/**
+ * 
+ * @param data 
+ * @returns 
+ */
+export const getPeerChain = (data: PeerNode[]): Block[][] => {
+    return [];
+}
+
+/**
+ * 
+ * @param block 
+ */
+export const sendChain = (block: BlockChain) => {
+
+}
+
+/**
+ * 
+ */
+export const synchronizePeers = (peers: PeerNode[]) => {
+
+}
+
+
+
+
 
 export const purchase = (req: any, res: any) => {
     console.log(req.body);

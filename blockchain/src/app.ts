@@ -1,7 +1,8 @@
 import express from 'express';
-import routes from './routes/routes';
+import clientRoutes from './routes/clientRoutes';
 import BlockChain from './blockchain/blockChain'
 import cors from 'cors';
+import serverRoutes from './routes/blockChainRoutes';
 
 const app = express();
 
@@ -24,4 +25,5 @@ var blockChain: BlockChain = new BlockChain([]);
 module.exports = blockChain;
 
 
-app.use('/', routes);
+app.use('/', clientRoutes);
+app.use('/block', serverRoutes);

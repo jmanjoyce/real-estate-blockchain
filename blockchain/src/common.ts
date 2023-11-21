@@ -16,3 +16,7 @@ export interface TransactionData {
     price: number,
 
 }
+
+export interface PeerNode {
+    ipAdress: string,
+}
