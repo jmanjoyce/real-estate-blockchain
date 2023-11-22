@@ -1,13 +1,15 @@
-import { Block, TransactionData } from '../common';
+import { Block, PeerNode, TransactionData } from '../common';
 import { createHash, randomBytes } from 'crypto';
+import { pickRandomElements } from './utils';
+import { replicateTransaction, replicateNewTransaction } from './blockChainStore';
 
 class BlockChain {
 
     blocks: Block[];
     pendingTransactionData: TransactionData[];
-    peers: string[];
+    peers: PeerNode[];
 
-    constructor(peers: string[]){
+    constructor(peers: PeerNode[]){
         this.blocks = [];
         this.pendingTransactionData = [];
         this.peers = peers ?? [];
@@ -15,7 +17,29 @@ class BlockChain {
 
     addTransaction(data: TransactionData){
         this.pendingTransactionData.push(data);
-        console.log(this);
+        if (this.peers.length > 0){
+            // Could use some 
+            const maxReplication = 2;
+            const numReplication = Math.min(this.peers.length, maxReplication);
+            const peerForReplication: PeerNode[] | undefined = pickRandomElements(this.peers, numReplication);
+            if (peerForReplication){
+                replicateNewTransaction([data], peerForReplication);
+            }
+        }
+        
+    }
+
+    addPeer(newPeer: PeerNode){
+        this.peers.push(newPeer);
+
+    }
+
+    getPeers():PeerNode[]{
+        return this.peers;
+    }
+
+    getPendingTransaction(): TransactionData[]{
+        return this.pendingTransactionData;
     }
 
     newBlock(){
@@ -33,6 +57,14 @@ class BlockChain {
         }
         this.pendingTransactionData = []
         this.blocks.push(newBlock);
+    }
+
+    replicateTransaction(data: TransactionData[]){
+        const transactionSet: Set<TransactionData> = new Set(this.pendingTransactionData);
+        data.forEach(transaction => {
+            transactionSet.add(transaction);
+        })
+        this.pendingTransactionData = [...transactionSet];
     }
 
     static hash(block: Block, nonce?:string) {
