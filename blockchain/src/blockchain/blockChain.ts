@@ -1,18 +1,41 @@
 import { Block, PeerNode, TransactionData } from '../common';
 import { createHash, randomBytes } from 'crypto';
 import { pickRandomElements } from './utils';
-import { replicateTransaction, replicateNewTransaction } from './blockChainStore';
+import { replicateTransaction, replicateNewTransaction, initialBroadCast } from './blockChainStore';
+const os = require('os');
 
 class BlockChain {
 
     blocks: Block[];
     pendingTransactionData: TransactionData[];
     peers: PeerNode[];
+    node: PeerNode;
+    rootNode: PeerNode | undefined;
 
     constructor(peers: PeerNode[]){
         this.blocks = [];
         this.pendingTransactionData = [];
         this.peers = peers ?? [];
+        this.node = {
+            // ipAdress: os.networkInterfaces()['eth0'][0].address,
+            ipAdress: 'localhost',
+            port: process.env.PORT ?? '3000',
+        }
+
+        if (process.env.ROOT_NAME !== undefined && 
+            process.env.ROOT_PORT !== undefined) {
+            // Root variable set means is root
+            this.rootNode = {
+                ipAdress: process.env.ROOT_NAME,
+                port: process.env.ROOT_PORT,
+            }
+            initialBroadCast(this.node, this.rootNode);
+            
+        
+        }
+        
+
+        console.log(this.node, 's');
     }
 
     addTransaction(data: TransactionData){

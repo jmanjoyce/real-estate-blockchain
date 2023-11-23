@@ -1,0 +1,18 @@
+version: '3'
+services:
+  blockchain-root:
+    build: .
+    ports:
+      - "3001:3000"  # Maps host port 3001 to container port 3000 for the first instance
+    environment:
+      - PORT=3001
+
+  blockchain1:
+    build: .
+    ports:
+      - "3002:3000"  # Maps host port 3002 to container port 3000 for the second instance
+    environment:
+      - ROOT_NAME=localhost  
+      - ROOT_PORT=3001
+      - PORT=3002
+      

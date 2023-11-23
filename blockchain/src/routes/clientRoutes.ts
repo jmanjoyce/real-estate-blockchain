@@ -1,5 +1,5 @@
 import express from "express";
-import { addPeer, mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
+import { mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
 
@@ -11,7 +11,8 @@ router.get('/', (req, res) => {
   });
 
 /**
- * 
+ * has some id information that might be pernient to asking a different block
+ * to mine.
  */
 router.post('/mineNewBlock', mineNewBlock);
 
@@ -20,15 +21,13 @@ router.post('/mineNewBlock', mineNewBlock);
  */
 router.post('/purchase', purchase);
 
+
 /**
  * 
  */
 router.get('/startBlockChain', startBlockChain );
 
-/**
- * 
- */
-router.get('/addPeer', addPeer );
+
 
 
 export default router;

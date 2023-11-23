@@ -1,7 +1,6 @@
 
 import { Block, PeerNode, TransactionData } from '../common';
 import BlockChain from './blockChain';
-import WebSocket from 'ws';
 import axios from 'axios';
 
 
@@ -50,7 +49,7 @@ export const mineNewBlock = (req: any, res: any) => {
 export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<TransactionData[]> => {
     const transactionSet: Set<TransactionData> = new Set();
     const promises = peerNodes.map((node) => {
-        const url = `http://${node.ipAdress}/${node.port}/block/pendingTransactions`;
+        const url = `http://${node.ipAdress}:${node.port}/block/pendingTransactions`;
         axios.get(url)
             .then(res => {
                 if (res.status == 200) {
@@ -86,7 +85,7 @@ export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<Tra
  */
 export const replicateNewTransaction = async (data: TransactionData[], peers: PeerNode[]) => {
     peers.forEach(node => {
-        const url = `http://${node.ipAdress}/${node.port}/block/replicateTransaction`;
+        const url = `http://${node.ipAdress}:${node.port}/block/replicateTransaction`;
         axios.post(url, data);
 
     })
@@ -183,13 +182,14 @@ export const recieveBroadCast = (req: any, res: any) => {
 export const recieveNewBroadCast = (req: any, res: any) => {
     var blockChain = require('../app');
     const knownPeers: PeerNode[] = blockChain.getPeers();
+    res.json(knownPeers);
     const body = req.body;
     const newNode: PeerNode = {
         ipAdress: body.ipAdress,
         port: body.port,
     }
     blockChain.addPeer(newNode);
-    res.json(knownPeers);
+    
 }
 
 /**
@@ -206,7 +206,10 @@ export const recieveNewBroadCast = (req: any, res: any) => {
 export const initialBroadCast = async (nodeInfo: PeerNode, rootPeer: PeerNode) => {
     var blockChain = require('../app');
     try {
-        const url = `http://${rootPeer.ipAdress}/${rootPeer.port}/block/newBroadcast`;
+        const url = `http://${rootPeer.ipAdress}:${rootPeer.port}/block/newBroadcast`;
+
+        // Temp for debugging
+        console.log('initial broadcast url', url);
         const fetchedNewPeers = await axios.post(url, nodeInfo)
             .then(res => {
                 if (res.status == 200) {
@@ -227,7 +230,8 @@ export const initialBroadCast = async (nodeInfo: PeerNode, rootPeer: PeerNode) =
         console.log(fetchedNewPeers);
         if (fetchedNewPeers.length > 0) {
             fetchedNewPeers.forEach(peer => {
-                const url2 = `http://${peer.ipAdress}/${peer.port}/block/broadcast`;
+                const url2 = `http://${peer.ipAdress}:${peer.port}/block/broadcast`;
+                console.log('second url called', url2);
                 blockChain.addPeer(peer);
                 axios.post(url2, nodeInfo).catch(error => {
                     console.log(`Problem contacting server broadcast `, url2);

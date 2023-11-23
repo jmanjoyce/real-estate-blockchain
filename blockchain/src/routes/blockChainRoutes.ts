@@ -1,5 +1,5 @@
 import express from "express";
-import { addPeer, getPendingTransactions, mineNewBlock, purchase, replicateTransaction, startBlockChain } from '../blockchain/blockChainStore'
+import { getPendingTransactions, mineNewBlock, purchase, recieveBroadCast, recieveNewBroadCast, replicateTransaction, startBlockChain } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
 
@@ -18,6 +18,16 @@ router.post('/replicateTransaction', replicateTransaction);
 /**
  * 
  */
-router.get('/pendingTransaction', getPendingTransactions);
+router.get('/pendingTransactions', getPendingTransactions);
+
+/**
+ * 
+ */
+router.post('/newBroadCast', recieveNewBroadCast);
+
+/**
+ * 
+ */
+router.post('/broadCast', recieveBroadCast);
 
 export default router;

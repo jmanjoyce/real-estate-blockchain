@@ -19,4 +19,5 @@ export interface TransactionData {
 
 export interface PeerNode {
     ipAdress: string,
+    port: string,
 }
