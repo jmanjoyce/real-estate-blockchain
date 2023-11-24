@@ -161,6 +161,7 @@ export const getCurrentPendingTransaction = (req: any, res: any) => {
  */
 export const recieveBroadCast = (req: any, res: any) => {
     var blockChain = require('../app');
+    console.log('recieving regular broadcast');
     const body = req.body;
     const newNode: PeerNode = {
         ipAdress: body.ipAdress,
@@ -181,6 +182,7 @@ export const recieveBroadCast = (req: any, res: any) => {
  */
 export const recieveNewBroadCast = (req: any, res: any) => {
     var blockChain = require('../app');
+    console.log('recieving new broadcast');
     const knownPeers: PeerNode[] = blockChain.getPeers();
     res.json(knownPeers);
     const body = req.body;
@@ -203,11 +205,17 @@ export const recieveNewBroadCast = (req: any, res: any) => {
  * @param nodeInfo 
  * @param rootPeer 
  */
-export const initialBroadCast = async (nodeInfo: PeerNode, rootPeer: PeerNode) => {
-    var blockChain = require('../app');
+export const initialBroadCast = async (blockChain: BlockChain) => {
+    if (process.env.ROOT_IP === undefined &&
+                process.env.ROOT_PORT === undefined) {
+        return;
+    }
+    const nodeInfo: PeerNode = blockChain.node;
+    const rootPeer: PeerNode = blockChain.rootNode!;
     try {
+       
         const url = `http://${rootPeer.ipAdress}:${rootPeer.port}/block/newBroadcast`;
-
+        console.log(blockChain);
         // Temp for debugging
         console.log('initial broadcast url', url);
         const fetchedNewPeers = await axios.post(url, nodeInfo)
@@ -227,11 +235,12 @@ export const initialBroadCast = async (nodeInfo: PeerNode, rootPeer: PeerNode) =
                 throw error; // Rethrow the error to be caught by the outer try-catch block
             });
 
-        console.log(fetchedNewPeers);
+        console.log('fetched peers', fetchedNewPeers);
         if (fetchedNewPeers.length > 0) {
             fetchedNewPeers.forEach(peer => {
                 const url2 = `http://${peer.ipAdress}:${peer.port}/block/broadcast`;
-                console.log('second url called', url2);
+                console.log('second url called', url2, peer);
+            
                 blockChain.addPeer(peer);
                 axios.post(url2, nodeInfo).catch(error => {
                     console.log(`Problem contacting server broadcast `, url2);

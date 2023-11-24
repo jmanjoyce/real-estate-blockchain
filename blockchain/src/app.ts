@@ -3,6 +3,7 @@ import clientRoutes from './routes/clientRoutes';
 import BlockChain from './blockchain/blockChain'
 import cors from 'cors';
 import serverRoutes from './routes/blockChainRoutes';
+import { initialBroadCast } from './blockchain/blockChainStore';
 
 const app = express();
 
@@ -21,6 +22,10 @@ app.listen(3000, () => {
 
 
 var blockChain: BlockChain = new BlockChain([]);
+
+// This is not a super programmatic way to start this, some weird things were going on so I 
+// did it for debugging/
+initialBroadCast(blockChain); // Could be a starting method inside a route
 module.exports = blockChain;
 
 

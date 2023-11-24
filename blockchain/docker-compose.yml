@@ -5,14 +5,36 @@ services:
     ports:
       - "3001:3000"  # Maps host port 3001 to container port 3000 for the first instance
     environment:
-      - PORT=3001
+      - PORT=3000
+      - IP=blockchain-root
+    networks:
+      - blockchain-network
 
   blockchain1:
     build: .
     ports:
-      - "3002:3000"  # Maps host port 3002 to container port 3000 for the second instance
+      - "3002:3000"  
     environment:
-      - ROOT_NAME=localhost  
-      - ROOT_PORT=3001
-      - PORT=3002
+      - ROOT_IP=blockchain-root  
+      - ROOT_PORT=3000
+      - IP=blockchain1
+      - PORT=3000
+    networks:
+      - blockchain-network
+
+  blockchain2:
+    build: .
+    ports:
+      - "3003:3000" 
+    environment:
+      - ROOT_IP=blockchain-root  
+      - ROOT_PORT=3000
+      - IP=blockchain2
+      - PORT=3000
+    networks:
+      - blockchain-network
       
+
+networks:
+  blockchain-network:
+    driver: bridge
