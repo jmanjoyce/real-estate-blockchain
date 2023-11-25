@@ -3,7 +3,7 @@
   
   <div class="top">
     <div class="item">
-      <BlockChainManager :machines="nodes"></BlockChainManager>
+      <BlockChainManager @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
     </div>
     <div class="item">
       <RealEstate @purchase="purchase"></RealEstate>
@@ -40,7 +40,7 @@ export default defineComponent({
   methods: {
     async purchase(purchase: Purchase){
       console.log('purchasing', purchase);
-      await axios.post('http://localhost:3000/purchase', purchase).then(res => {
+      await axios.post('http://localhost:3001/purchase', purchase).then(res => {
         console.log(res);
       })
     },
@@ -48,7 +48,11 @@ export default defineComponent({
       const info = {
         id: id
       }
-      await axios.post('http://localhost:3000/', info);
+      // Endpoint not tested yet
+      await axios.post('http://localhost:3001/mineNewBlock', info)
+      .then(res => {
+        console.log(res);
+      })
     }
   }
   

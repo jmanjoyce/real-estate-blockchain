@@ -63,7 +63,6 @@
 
 <script lang="ts">
 import { PropType, defineComponent } from 'vue';
-import axios from 'axios'
 import { Node } from '@/common';
 
 
@@ -91,9 +90,10 @@ export default defineComponent({
   },
   methods: {
     async startBlockChain() {
-      axios.get('/start')
+      
     },
-    async mineNewBlock(){
+    mineNewBlock(){
+      console.log('emmiting');
       this.$emit('mine', 0);
     }
   }

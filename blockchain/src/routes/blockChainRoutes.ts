@@ -1,5 +1,13 @@
 import express from "express";
-import { getPendingTransactions, mineNewBlock, purchase, recieveBroadCast, recieveNewBroadCast, replicateTransaction, startBlockChain } from '../blockchain/blockChainStore'
+import { confirmMining,
+    getChain,
+    getPendingTransactions,
+    mineNewBlock,
+    purchase,
+    recieveBroadCast,
+    recieveNewBroadCast,
+    replicateTransaction,
+    startBlockChain } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
 
@@ -14,6 +22,18 @@ router.get('/', (req, res) => {
  * 
  */
 router.post('/replicateTransaction', replicateTransaction);
+
+/**
+ * 
+ */
+router.post('/confirmMining', confirmMining);
+
+/**
+ * 
+ */
+router.get('/currentBlock', getChain)
+
+
 
 /**
  * 

@@ -7,15 +7,7 @@ import axios from 'axios';
 /**
  * 
  * TODO for part 2 of proj
- * Figure out peer synchronization logic. 
- * Implement all peer to peer communication 
- * Figure out data tranfer objects between peers.
- * Figure out enviorment variable
- * Think more carefully about IP adress representation.
- * Figure out how to pass IP adress information into the 
- * also set up DC on backend
- * 
- * Docker compose Enviorment variable can use envior
+ * Think more carefully about IP adress representation. (for when we start using cluster)
  * 
  * 
  * Part 3 will deal with 
@@ -85,9 +77,12 @@ export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<Tra
  */
 export const replicateNewTransaction = async (data: TransactionData[], peers: PeerNode[]) => {
     peers.forEach(node => {
-        const url = `http://${node.ipAdress}:${node.port}/block/replicateTransaction`;
-        axios.post(url, data);
 
+        const url = `http://${node.ipAdress}:${node.port}/block/replicateTransaction`;
+        console.log('replicating new transaction ', url)
+        axios.post(url, data).then().catch(err => {
+            console.log(err);
+        })
     })
 
 }
@@ -108,7 +103,8 @@ export const deleteSavedTransactions = () => {
  */
 export const replicateTransaction = (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
-    const transactions: TransactionData[] = req.data.map((transaction: TransactionData) => {
+    console.log('replicating transactions');
+    const transactions: TransactionData[] = req.body.map((transaction: TransactionData) => {
         return {
             previousOwner: transaction.previousOwner,
             price: transaction.price,
@@ -119,6 +115,7 @@ export const replicateTransaction = (req: any, res: any) => {
 
     })
     blockChain.replicateTransaction(transactions);
+    res.send('replicated transactions');
 
 }
 
@@ -161,7 +158,7 @@ export const getCurrentPendingTransaction = (req: any, res: any) => {
  */
 export const recieveBroadCast = (req: any, res: any) => {
     var blockChain = require('../app');
-    console.log('recieving regular broadcast');
+    //console.log('recieving regular broadcast');
     const body = req.body;
     const newNode: PeerNode = {
         ipAdress: body.ipAdress,
@@ -170,6 +167,87 @@ export const recieveBroadCast = (req: any, res: any) => {
     blockChain.addPeer(newNode);
     res.send("Broadcast recieved");
 
+}
+
+/**
+ * Succesful Mine broadcast to peers that is has mined a block with
+ * a bunch of new transaction
+ */
+export const succesfulMine = async (peers: PeerNode[], minedTransactions: TransactionData[]) => {
+    const promises = peers.map((node) => {
+        const url = `http://${node.ipAdress}:${node.port}/block/confirmMining`;
+        axios.post(url, minedTransactions).then().catch(err => {
+            console.log(err);
+        })
+    });
+    await Promise.all(promises);
+}
+
+/**
+ * 
+ * @returns 
+ */
+export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> => {
+    const chains: Block[][] = [];
+    const promises = peerNodes.map((node) => {
+        const url = `http://${node.ipAdress}:${node.port}/block/currentBlock`;
+        return axios.get(url)
+            .then(res => {
+                if (res.status == 200) {
+                    try {
+                        const block: Block[] = res.data.map((item: any) => ({
+                            index: item.index,
+                            timeStamp: new Date(item.timeStamp),
+                            previousHash: item.previousHash,
+                            nonce: item.nonce,
+                            information: item.information.map((data: TransactionData) => ({
+                                id: data.id,
+                                previousOwner: data.previousOwner,
+                                newOwner: data.newOwner,
+                                adress: data.adress,
+                                price: data.price,
+                            }))
+                        }));
+                        chains.push(block);
+                    } catch (err) {
+                        console.log('error processing blockchain');
+                        // return [];
+                    }
+
+                } else {
+                    console.log("Problem collection data from ", url);
+                }
+            }).catch(error => {
+                
+                console.error("Error getting pending transaction from peer nodes: ", error);
+            })
+
+
+    });
+    await Promise.all(promises);
+    return chains;
+
+
+}
+
+/**
+ * Takes the new transaction 
+ * 
+ */
+export const confirmMining = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const body = req.body;
+    const transactionData: TransactionData[] = body.map((transaction: TransactionData) => {
+        return {
+            previousOwner: transaction.previousOwner,
+            price: transaction.price,
+            newOwner: transaction.newOwner,
+            id: transaction.id,
+            adress: transaction.adress,
+
+        }
+    })
+    blockChain.updatePendingTransactions(transactionData);
 
 }
 
@@ -182,7 +260,7 @@ export const recieveBroadCast = (req: any, res: any) => {
  */
 export const recieveNewBroadCast = (req: any, res: any) => {
     var blockChain = require('../app');
-    console.log('recieving new broadcast');
+    //console.log('recieving new broadcast');
     const knownPeers: PeerNode[] = blockChain.getPeers();
     res.json(knownPeers);
     const body = req.body;
@@ -191,7 +269,7 @@ export const recieveNewBroadCast = (req: any, res: any) => {
         port: body.port,
     }
     blockChain.addPeer(newNode);
-    
+
 }
 
 /**
@@ -207,17 +285,17 @@ export const recieveNewBroadCast = (req: any, res: any) => {
  */
 export const initialBroadCast = async (blockChain: BlockChain) => {
     if (process.env.ROOT_IP === undefined &&
-                process.env.ROOT_PORT === undefined) {
+        process.env.ROOT_PORT === undefined) {
         return;
     }
     const nodeInfo: PeerNode = blockChain.node;
     const rootPeer: PeerNode = blockChain.rootNode!;
     try {
-       
+
         const url = `http://${rootPeer.ipAdress}:${rootPeer.port}/block/newBroadcast`;
-        console.log(blockChain);
+        //console.log(blockChain);
         // Temp for debugging
-        console.log('initial broadcast url', url);
+        //console.log('initial broadcast url', url);
         const fetchedNewPeers = await axios.post(url, nodeInfo)
             .then(res => {
                 if (res.status == 200) {
@@ -239,8 +317,8 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
         if (fetchedNewPeers.length > 0) {
             fetchedNewPeers.forEach(peer => {
                 const url2 = `http://${peer.ipAdress}:${peer.port}/block/broadcast`;
-                console.log('second url called', url2, peer);
-            
+                //console.log('second url called', url2, peer);
+
                 blockChain.addPeer(peer);
                 axios.post(url2, nodeInfo).catch(error => {
                     console.log(`Problem contacting server broadcast `, url2);
@@ -250,8 +328,20 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
 
     } catch (error) {
         console.error("Error occurred while fetching new peers: ", error);
-       
+
     }
+
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const getChain = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const chain = blockChain.getBlockChain();
+    res.json(chain);
 
 }
 

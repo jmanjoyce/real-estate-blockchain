@@ -6,14 +6,14 @@ const os = require('os');
 
 class BlockChain {
 
-    blocks: Block[];
+    blockChain: Block[];
     pendingTransactionData: TransactionData[];
     peers: PeerNode[];
     node: PeerNode;
     rootNode: PeerNode | undefined;
 
     constructor(peers: PeerNode[]) {
-        this.blocks = [];
+        this.blockChain = [];
         this.pendingTransactionData = [];
         this.peers = peers ?? [];
         this.node = {
@@ -29,13 +29,7 @@ class BlockChain {
                 ipAdress: process.env.ROOT_IP,
                 port: process.env.ROOT_PORT,
             }
-            
-
-
         }
-
-
-        console.log(this.node, 's');
     }
 
     // initialBroadCast() {
@@ -47,7 +41,10 @@ class BlockChain {
 
     // }
 
+    
+
     addTransaction(data: TransactionData) {
+        console.log('adding transaction');
         this.pendingTransactionData.push(data);
         if (this.peers.length > 0) {
             // Could use some 
@@ -74,21 +71,69 @@ class BlockChain {
         return this.pendingTransactionData;
     }
 
+    updatePendingTransactions(processedTransactions: TransactionData[]) {
+        const processedSet: Set<TransactionData> = new Set(processedTransactions);
+        this.pendingTransactionData = this.pendingTransactionData
+            .filter(entry => {
+                !processedSet.has(entry)
+            });
+
+    }
+
+    validateBlock(blockChain: Block[]): boolean{
+
+        var lastBlock = blockChain[0];
+        
+        let i = 1;
+        while (i < blockChain.length) {
+            var currBlock = blockChain[i];
+            const lastHash = BlockChain.hash(lastBlock);
+            if (currBlock.previousHash != lastHash){
+                return false;
+            }
+            // Would also need to check valid nonce;
+            if (!this.validProof(lastBlock, lastBlock.nonce!)){
+                return false;
+            }
+
+        }
+        return true;
+
+        
+
+
+    }
+
+    getBlockChain(): Block[]{
+        return this.blockChain;
+    }
+
+    resolveConflicts(){
+        // This is going to be the method that finds the longest chain
+        // and checks to make sure it's valid
+
+
+    }
+
     newBlock() {
         // Get transaction data from neighbors; (maybe) so we don't have to synchronize block
-
-        const prevBlock: Block | undefined = this.blocks.length > 0 ? this.blocks[this.blocks.length - 1] : undefined;
+        console.log('starting mining');
+        const prevBlock: Block | undefined = this.blockChain.length > 0 ? this.blockChain[this.blockChain.length - 1] : undefined;
         const newNonce: string = prevBlock ? this.mine(prevBlock) : BlockChain.nonce();
         const previousHash: string = prevBlock ? BlockChain.hash(prevBlock) : "0000";
         const newBlock: Block = {
-            index: this.blocks.length,
+            index: this.blockChain.length,
             timeStamp: new Date(),
             information: this.pendingTransactionData,
             previousHash: previousHash,
             nonce: newNonce,
         }
+        if (prevBlock == undefined){
+            console.log('initial block mined');
+        }
+        
         this.pendingTransactionData = []
-        this.blocks.push(newBlock);
+        this.blockChain.push(newBlock);
     }
 
     replicateTransaction(data: TransactionData[]) {
@@ -108,16 +153,19 @@ class BlockChain {
         return createHash("sha256").update(randomBytes(32)).digest("hex");
     }
 
-    mine(lastBlock: Block, difficulty: number = 4): string {
+    mine(lastBlock: Block): string {
         while (true) {
             const newNonce = BlockChain.nonce();
-            if (BlockChain.hash(lastBlock, newNonce).slice(0, difficulty) === "0".repeat(difficulty)) {
+            if (this.validProof(lastBlock, newNonce)) {
                 console.log('Mining Complete', newNonce);
                 return newNonce;
             }
 
         }
+    }
 
+    validProof(lastBlock: Block, nonce: string, difficulty: number =4): boolean{
+        return BlockChain.hash(lastBlock, nonce).slice(0, difficulty) === "0".repeat(difficulty)
     }
 
 }
