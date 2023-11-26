@@ -47,13 +47,13 @@
     </div>
     <div class="buttons">
       <div class="button">
-        <v-btn color='blue' @click="startBlockChain">Start All Nodes</v-btn>
+        <v-btn size="small" color='blue' @click="startBlockChain">Start All Nodes</v-btn>
+      </div>
+      <div  class="button">
+        <v-btn size="small" color='red' @click="startBlockChain">Kill Block Chain</v-btn>
       </div>
       <div class="button">
-        <v-btn color='red' @click="startBlockChain">Kill Block Chain</v-btn>
-      </div>
-      <div class="button">
-        <v-btn color="purple" @click="mineNewBlock">Mine new block</v-btn>
+        <v-btn size="small" color="purple" @click="mineNewBlock">Mine new block</v-btn>
 
       </div>
     </div>

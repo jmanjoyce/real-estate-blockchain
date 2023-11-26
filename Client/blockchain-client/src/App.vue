@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-unused-components -->
 <template>
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
   
@@ -8,6 +9,10 @@
     <div class="item">
       <RealEstate @purchase="purchase"></RealEstate>
     </div>
+    <div class="item">
+      <AddressLookup></AddressLookup>
+
+    </div>
   </div>
 </template>
 
@@ -16,6 +21,7 @@ import { defineComponent } from 'vue'
 import BlockChainManager from './components/BlockChainManager.vue'
 import { Node, Purchase } from './common'
 import RealEstate from './components/RealEstate.vue';
+import AddressLookup from './components/AddressLookup.vue';
 const data = require('./assets/nodes.json');
 import axios from 'axios'
 
@@ -26,7 +32,8 @@ export default defineComponent({
   name: 'App',
   components: {
     BlockChainManager,
-    RealEstate
+    RealEstate,
+    AddressLookup
 },
  
   data():{
@@ -80,6 +87,6 @@ export default defineComponent({
 }
 
 .item {
-  min-width: 50%;
+  min-width: 33%;
 }
 </style>
