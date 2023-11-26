@@ -7,7 +7,8 @@ import { confirmMining,
     recieveBroadCast,
     recieveNewBroadCast,
     replicateTransaction,
-    startBlockChain } from '../blockchain/blockChainStore'
+    resolveConflicts,
+    startBlockChain} from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
 
@@ -31,7 +32,12 @@ router.post('/confirmMining', confirmMining);
 /**
  * 
  */
-router.get('/currentBlock', getChain)
+router.get('/currentBlock', getChain);
+
+/**
+ * 
+ */
+router.post('/synchronize', resolveConflicts);
 
 
 

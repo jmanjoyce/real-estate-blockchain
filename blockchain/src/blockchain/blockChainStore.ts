@@ -6,13 +6,13 @@ import axios from 'axios';
 
 /**
  * 
- * TODO for part 2 of proj
- * Think more carefully about IP adress representation. (for when we start using cluster)
+ * TODO for part 2
+ * Test Mining, synchronization, replication. ECT
+ *  (for when we start using cluster)
  * 
  * 
- * Part 3 will deal with 
- * Hooking up front end with multiple nodes and have reset block chains not running
- * (remove peer add peer)
+ * Part 3 
+ * Implement testing features on front end. Seems like a good idea to have a page wit
  * 
  * Part 4, 
  * Make this project a stateless applicatation using mongo (extra hard haha)
@@ -119,16 +119,7 @@ export const replicateTransaction = (req: any, res: any) => {
 
 }
 
-/**
- * Method will call all peernodes and wait for them to send chain. It will the return all the
- * blocks in the chain
- * 
- * @param data 
- * @returns 
- */
-export const getPeerChain = (data: PeerNode[]): Block[][] => {
-    return [];
-}
+
 
 /**
  * This will just send the current information when a concensus algorithim is started
@@ -166,6 +157,31 @@ export const recieveBroadCast = (req: any, res: any) => {
     }
     blockChain.addPeer(newNode);
     res.send("Broadcast recieved");
+
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const resolveConflicts = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    blockChain.resolveConflicts();
+
+}
+
+/**
+ * 
+ * @param peers 
+ */
+export const synchronizeChains = (peers: PeerNode[])=>{
+    peers.forEach(node => {
+        const url = `http://${node.ipAdress}:${node.port}/block/synchronize`;
+        axios.post(url).then().catch(err => {
+            console.log(err);
+        })
+    })
 
 }
 

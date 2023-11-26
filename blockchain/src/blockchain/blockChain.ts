@@ -1,7 +1,7 @@
 import { Block, PeerNode, TransactionData } from '../common';
 import { createHash, randomBytes } from 'crypto';
 import { pickRandomElements } from './utils';
-import { replicateTransaction, replicateNewTransaction, initialBroadCast } from './blockChainStore';
+import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine } from './blockChainStore';
 const os = require('os');
 
 class BlockChain {
@@ -108,16 +108,27 @@ class BlockChain {
         return this.blockChain;
     }
 
-    resolveConflicts(){
-        // This is going to be the method that finds the longest chain
-        // and checks to make sure it's valid
+    async resolveConflicts(){
 
+        var newChain: undefined| Block[] = undefined
 
+        const peerChains: Block[][] = await getPeerChains(this.peers);
+        let max = this.blockChain.length
+        peerChains.forEach((chain: Block[]) => {
+            if (chain.length > max && this.validateBlock(chain)){
+                newChain = chain;
+            }
+
+        })
+        if (newChain){
+            this.blockChain = newChain;
+        }
     }
 
-    newBlock() {
+    async newBlock() {
         // Get transaction data from neighbors; (maybe) so we don't have to synchronize block
         console.log('starting mining');
+        await this.resolveConflicts();
         const prevBlock: Block | undefined = this.blockChain.length > 0 ? this.blockChain[this.blockChain.length - 1] : undefined;
         const newNonce: string = prevBlock ? this.mine(prevBlock) : BlockChain.nonce();
         const previousHash: string = prevBlock ? BlockChain.hash(prevBlock) : "0000";
@@ -132,8 +143,10 @@ class BlockChain {
             console.log('initial block mined');
         }
         
-        this.pendingTransactionData = []
+        this.pendingTransactionData = [];
         this.blockChain.push(newBlock);
+        succesfulMine(this.peers, newBlock.information);
+        
     }
 
     replicateTransaction(data: TransactionData[]) {
