@@ -1,74 +1,147 @@
 <!-- eslint-disable vue/no-unused-components -->
 <template>
-  <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
-  
   <div class="top">
     <div class="item">
-      <BlockChainManager @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
+      <BlockChainManager v-if="nodes" @start="startNode" @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
     </div>
     <div class="item">
       <RealEstate @purchase="purchase"></RealEstate>
     </div>
     <div class="item">
       <AddressLookup></AddressLookup>
-
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import BlockChainManager from './components/BlockChainManager.vue'
-import { Node, Purchase } from './common'
-import RealEstate from './components/RealEstate.vue';
-import AddressLookup from './components/AddressLookup.vue';
-const data = require('./assets/nodes.json');
-import axios from 'axios'
+import { defineComponent } from "vue";
+import BlockChainManager from "./components/BlockChainManager.vue";
+import { Node, Purchase, Status, StatusDto } from "./common";
+import RealEstate from "./components/RealEstate.vue";
+import AddressLookup from "./components/AddressLookup.vue";
+const data = require("./assets/nodes.json");
+import axios from "axios";
+// const dotenv = require('dotenv');
+// dotenv.config();
 
-const parsedData: Node[] = JSON.parse(JSON.stringify(data));
+interface NodeInfo {
+  ipAddress: string;
+  port: string;
+  location: string;
+}
 
+const parsedData: NodeInfo[] = JSON.parse(JSON.stringify(data));
 
 export default defineComponent({
-  name: 'App',
+  name: "App",
   components: {
     BlockChainManager,
     RealEstate,
-    AddressLookup
-},
- 
-  data():{
-    nodes: Node[];
-  }
-    {
-      return {
-         nodes: parsedData,
-      }
+    AddressLookup,
   },
+
+  data(): {
+    nodes: Node[] | undefined;
+  } {
+    return {
+      nodes: undefined,
+    };
+  },
+  async mounted() {
+    this.refresh();
+    // Get status of all nodes,
+
+
+    //this.nodes = nodesInfo;
+
+
+    // Set them on the node info
+
+    // const promises = parsedData.map(data => {
+    //     axios.get
+    //   })
+    //   await Promise.all(promises);
+    //   return [];
+  },
+
   methods: {
-    async purchase(purchase: Purchase){
-      console.log('purchasing', purchase);
-      await axios.post('http://localhost:3001/purchase', purchase).then(res => {
-        console.log(res);
-      })
+    async refresh() {
+      const nodesInfo: Node[] = [];
+      const promises = parsedData.map((node) => {
+        const url = `http://${node.ipAddress}:${node.port}/status`;
+        return axios.get(url)
+          .then((res) => {
+            const info: StatusDto = res.data;
+            const nodeInfo: Node = {
+              ipAddress: node.ipAddress,
+              port: node.port,
+              location: node.location,
+              status: info.status,
+            };
+            return nodeInfo;
+          })
+          .catch((error) => {
+            if (error.code === "ECONNREFUSED") {
+              console.log("Request refused", url);
+              const nodeInfo: Node = {
+                ipAddress: node.ipAddress,
+                port: node.port,
+                location: node.location,
+                status: Status.OFFLINE,
+              };
+              return nodeInfo;
+            } else {
+              console.error('Error getting info', error);
+              return null;
+            }
+          });
+      });
+
+      Promise.all(promises)
+        .then((results) => {
+          this.nodes = results.filter(node => node !== null) as Node[];
+          console.log(this.nodes);
+          console.log(nodesInfo);
+        })
+        .catch((error) => {
+          console.error('Error with Promise.all', error);
+        });
+
     },
-    async mineNewBlock(id: number){
+    async purchase(purchase: Purchase) {
+      console.log("purchasing", purchase);
+      await axios
+        .post("http://localhost:3001/purchase", purchase)
+        .then((res) => {
+          console.log(res);
+        });
+    },
+    async mineNewBlock(id: number) {
       const info = {
-        id: id
-      }
+        id: id,
+      };
       // Endpoint not tested yet
-      await axios.post('http://localhost:3001/mineNewBlock', info)
-      .then(res => {
-        console.log(res);
-      })
+      await axios
+        .post("http://localhost:3001/mineNewBlock", info)
+        .then((res) => {
+          console.log(res);
+        });
+    },
+    async startNode(index: number){
+      const node: Node | undefined = this.nodes?.at(index);
+      if (node){
+        const url = `http://${node.ipAddress}:${node.port}/start`
+        await axios.get(url).then(res => {
+          const info: StatusDto = res.data;
+          node.status = info.status;
+        }).catch(err => {
+          console.log('Trouble starting node', url, err);
+        });
+        
+      }
     }
-  }
-  
-  
-     
-
-  
-})
-
+  },
+});
 </script>
 <style>
 #app {
@@ -83,7 +156,6 @@ export default defineComponent({
 .top {
   display: flex;
   flex-direction: row;
-
 }
 
 .item {

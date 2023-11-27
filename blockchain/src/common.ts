@@ -1,3 +1,4 @@
+import { Status } from "./blockchain/blockChain";
 
 
 export interface Block {
@@ -14,10 +15,14 @@ export interface TransactionData {
     newOwner: string,
     adress: string,
     price: number,
-
 }
 
 export interface PeerNode {
     ipAdress: string,
     port: string,
+}
+
+export interface StatusDto {
+    status: Status,
+    message: string,
 }

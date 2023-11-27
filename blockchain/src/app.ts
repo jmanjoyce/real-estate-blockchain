@@ -25,7 +25,7 @@ var blockChain: BlockChain = new BlockChain([]);
 
 // This is not a super programmatic way to start this, some weird things were going on so I 
 // did it for debugging/
-initialBroadCast(blockChain); // Could be a starting method inside a route
+// initialBroadCast(blockChain); // Could be a starting method inside a route
 module.exports = blockChain;
 
 

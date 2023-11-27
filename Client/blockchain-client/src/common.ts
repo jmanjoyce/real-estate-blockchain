@@ -1,14 +1,24 @@
 export interface Node {
-    ipAdress: string,
+    ipAddress: string,
     port: string,
     location: string,
-    availability: string,
-    implementingBlocking: boolean,
+    status: Status,
 }
 
 export interface Purchase {
     name: string,
-    adress: string,
+    address: string,
     price: number,
 
+}
+
+export enum Status {
+    READY = 'Ready',
+    RUNNING = 'Running',
+    OFFLINE = 'Offline',
+}
+
+export interface StatusDto {
+    status: Status,
+    message: string,
 }

@@ -38,7 +38,8 @@ export default defineComponent({
 
     // Not stable couldn't get enviorment variables wokring yet.
     console.log(process.env.MAPS_KEY);
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.MAPS_KEY}=places`;
+    const key = "";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}=places`;
     script.async = true;
     script.defer = true;
 

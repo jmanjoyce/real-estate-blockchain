@@ -40,7 +40,6 @@ router.get('/currentBlock', getChain);
 router.post('/synchronize', resolveConflicts);
 
 
-
 /**
  * 
  */

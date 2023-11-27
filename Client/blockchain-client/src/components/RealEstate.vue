@@ -5,12 +5,9 @@
         </div>
         <div>
             <v-sheet width="300" class="mx-auto">
-
                 <v-form ref="form">
                     <v-text-field v-model="name" :counter="10" :rules="nameRules" label="Name" required></v-text-field>
-
-                    <v-text-field v-model="adress" :counter="10" label="Adress" required></v-text-field>
-
+                    <v-text-field v-model="address" :counter="10" label="Address" required></v-text-field>
                     <v-text-field v-model="price" type="number" :counter="10" label="Price" required></v-text-field>
 
                     <div class="d-flex flex-column">
@@ -21,7 +18,6 @@
                         <v-btn color="red" class="mt-4" block @click="reset">
                             Reset Form
                         </v-btn>
-
 
                     </div>
                 </v-form>
@@ -39,7 +35,7 @@ export default defineComponent({
     emits: ['purchase'],
     data(): {
         name: string,
-        adress: string,
+        address: string,
         nameRules: any,
         price: string,
     } {
@@ -49,7 +45,7 @@ export default defineComponent({
                 (v: any) => (v && v.length <= 20) || 'Name must be less than 20 characters',
             ],
             name: '',
-            adress: '',
+            address: '',
             price: '',
 
         }
@@ -59,7 +55,7 @@ export default defineComponent({
 
             const purchase: Purchase = {
                 name: this.name,
-                adress: this.adress,
+                address: this.address,
                 price: parseInt(this.price),
 
             }

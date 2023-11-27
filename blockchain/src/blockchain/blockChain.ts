@@ -1,8 +1,16 @@
 import { Block, PeerNode, TransactionData } from '../common';
 import { createHash, randomBytes } from 'crypto';
 import { pickRandomElements } from './utils';
-import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine } from './blockChainStore';
+import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine, synchronizeChains } from './blockChainStore';
 const os = require('os');
+
+
+export enum Status {
+    READY,
+    RUNNING,
+    OFFLINE,
+}
+
 
 class BlockChain {
 
@@ -11,6 +19,7 @@ class BlockChain {
     peers: PeerNode[];
     node: PeerNode;
     rootNode: PeerNode | undefined;
+    status: Status;
 
     constructor(peers: PeerNode[]) {
         this.blockChain = [];
@@ -21,7 +30,7 @@ class BlockChain {
             ipAdress: process.env.IP ?? 'localhost',
             port: process.env.PORT ?? '3000',
         }
-
+        
         if (process.env.ROOT_IP !== undefined &&
             process.env.ROOT_PORT !== undefined) {
             // Root variable set means is root
@@ -29,7 +38,19 @@ class BlockChain {
                 ipAdress: process.env.ROOT_IP,
                 port: process.env.ROOT_PORT,
             }
+            this.status = Status.READY;
+        } else {
+            this.status = Status.RUNNING;
         }
+    }
+
+    getStatus(): Status{
+        return this.status;
+
+    }
+
+    setStatus(status: Status) {
+        this.status = status;
     }
 
     // initialBroadCast() {
@@ -143,9 +164,18 @@ class BlockChain {
             console.log('initial block mined');
         }
         
-        this.pendingTransactionData = [];
+        // Reset our current pending transactions 
+        // calls update pending transactions to prevent cocurrency issues
+        this.updatePendingTransactions(newBlock.information);
         this.blockChain.push(newBlock);
+
+        // Alert peers the pending transactions have been done.
         succesfulMine(this.peers, newBlock.information);
+        const numSynchronization = 2;
+        const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(this.peers,numSynchronization );
+            if (peersForSynchronization) {
+                synchronizeChains(peersForSynchronization);
+            }
         
     }
 

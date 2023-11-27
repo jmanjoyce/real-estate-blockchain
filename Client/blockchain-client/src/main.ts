@@ -1,8 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-// import dotenv from 'dotenv';
 
-// dotenv.config();
 
 // Vuetify
 import 'vuetify/styles'

@@ -1,14 +1,15 @@
 
-import { Block, PeerNode, TransactionData } from '../common';
+import { Block, PeerNode, StatusDto, TransactionData } from '../common';
 import BlockChain from './blockChain';
 import axios from 'axios';
-
+import { Status } from './blockChain';
 
 /**
  * 
  * TODO for part 2
  * Test Mining, synchronization, replication. ECT
- *  (for when we start using cluster)
+ * Currently working on setting up testing for machines mining and starting stopping
+ * Optional Implementation of stopping machine.
  * 
  * 
  * Part 3 
@@ -330,6 +331,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
             });
 
         console.log('fetched peers', fetchedNewPeers);
+        blockChain.setStatus(Status.RUNNING);
         if (fetchedNewPeers.length > 0) {
             fetchedNewPeers.forEach(peer => {
                 const url2 = `http://${peer.ipAdress}:${peer.port}/block/broadcast`;
@@ -394,7 +396,48 @@ export const addTransaction = (req: any, res: any) => {
 
 }
 
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const startBlockChain = async (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    if (blockChain.getStatus() == Status.RUNNING){
+        const msg: StatusDto = {
+            status: Status.RUNNING,
+            message: 'Blockchain already started'
+        }
+        res.json(msg);
+    } else {
+        await initialBroadCast(blockChain).then(()=>{
+            const msg: StatusDto = {
+                status: Status.RUNNING,
+                message: 'Blockchain started',
+            }
+            res.json(msg);
+        }).catch(err => {
+            const msg: StatusDto = {
+                status: blockChain.getStatus(),
+                message: 'Problem starting blockchain',
+            }
+            res.json(msg);
+        }); 
+        
+    }
+    
+}
 
-export const startBlockChain = (req: any, res: any) => {
-
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const getStatus = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const status: StatusDto = {
+        status: blockChain.getStatus(),
+        message: '',
+    }
+    res.json(status);
 }
