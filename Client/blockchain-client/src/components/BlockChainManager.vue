@@ -67,7 +67,7 @@ import { Node } from '@/common';
 
 export default defineComponent({
   name: 'BlockChainManager',
-  emits: ['mine', 'start'],
+  emits: ['mine', 'start', 'dump'],
   props: {
     machines: Object as PropType<Node[]>,
   },
@@ -84,7 +84,8 @@ export default defineComponent({
     }
   },
   methods: {
-    async startBlockChain() {
+    startBlockChain() {
+      this.$emit('dump');
       
     },
     mineNewBlock(index: number){      

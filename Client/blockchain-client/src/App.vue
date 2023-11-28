@@ -2,7 +2,7 @@
 <template>
   <div class="top">
     <div class="item">
-      <BlockChainManager v-if="nodes" @start="startNode" @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
+      <BlockChainManager v-if="nodes" @start="startNode" @dump="dump" @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
     </div>
     <div class="item">
       <RealEstate @purchase="purchase"></RealEstate>

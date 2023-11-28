@@ -42,7 +42,7 @@ export const mineNewBlock = (req: any, res: any) => {
 export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<TransactionData[]> => {
     const transactionSet: Set<TransactionData> = new Set();
     const promises = peerNodes.map((node) => {
-        const url = `http://${node.ipAdress}:${node.port}/block/pendingTransactions`;
+        const url = `http://${node.ipAddress}:${node.port}/block/pendingTransactions`;
         axios.get(url)
             .then(res => {
                 if (res.status == 200) {
@@ -50,7 +50,7 @@ export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<Tra
                         id: item?.id,
                         previousOwner: item?.previousOwner,
                         price: item.price,
-                        adress: item.adress,
+                        address: item.address,
                         newOwner: item.newOwner,
                     }));
                     transactions.forEach((transaction: TransactionData) => {
@@ -79,7 +79,7 @@ export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<Tra
 export const replicateNewTransaction = async (data: TransactionData[], peers: PeerNode[]) => {
     peers.forEach(node => {
 
-        const url = `http://${node.ipAdress}:${node.port}/block/replicateTransaction`;
+        const url = `http://${node.ipAddress}:${node.port}/block/replicateTransaction`;
         console.log('replicating new transaction ', url)
         axios.post(url, data).then().catch(err => {
             console.log(err);
@@ -111,7 +111,7 @@ export const replicateTransaction = (req: any, res: any) => {
             price: transaction.price,
             newOwner: transaction.newOwner,
             id: transaction.id,
-            adress: transaction.adress,
+            address: transaction.address,
         }
 
     })
@@ -153,7 +153,7 @@ export const recieveBroadCast = (req: any, res: any) => {
     //console.log('recieving regular broadcast');
     const body = req.body;
     const newNode: PeerNode = {
-        ipAdress: body.ipAdress,
+        ipAddress: body.ipAddress,
         port: body.port,
     }
     blockChain.addPeer(newNode);
@@ -178,7 +178,7 @@ export const resolveConflicts = (req: any, res: any) => {
  */
 export const synchronizeChains = (peers: PeerNode[])=>{
     peers.forEach(node => {
-        const url = `http://${node.ipAdress}:${node.port}/block/synchronize`;
+        const url = `http://${node.ipAddress}:${node.port}/block/synchronize`;
         axios.post(url).then().catch(err => {
             console.log(err);
         })
@@ -192,7 +192,7 @@ export const synchronizeChains = (peers: PeerNode[])=>{
  */
 export const succesfulMine = async (peers: PeerNode[], minedTransactions: TransactionData[]) => {
     const promises = peers.map((node) => {
-        const url = `http://${node.ipAdress}:${node.port}/block/confirmMining`;
+        const url = `http://${node.ipAddress}:${node.port}/block/confirmMining`;
         axios.post(url, minedTransactions).then().catch(err => {
             console.log(err);
         })
@@ -207,7 +207,7 @@ export const succesfulMine = async (peers: PeerNode[], minedTransactions: Transa
 export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> => {
     const chains: Block[][] = [];
     const promises = peerNodes.map((node) => {
-        const url = `http://${node.ipAdress}:${node.port}/block/currentBlock`;
+        const url = `http://${node.ipAddress}:${node.port}/block/currentBlock`;
         return axios.get(url)
             .then(res => {
                 if (res.status == 200) {
@@ -221,7 +221,7 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
                                 id: data.id,
                                 previousOwner: data.previousOwner,
                                 newOwner: data.newOwner,
-                                adress: data.adress,
+                                address: data.address,
                                 price: data.price,
                             }))
                         }));
@@ -260,7 +260,7 @@ export const confirmMining = (req: any, res: any) => {
             price: transaction.price,
             newOwner: transaction.newOwner,
             id: transaction.id,
-            adress: transaction.adress,
+            address: transaction.address,
 
         }
     })
@@ -269,7 +269,7 @@ export const confirmMining = (req: any, res: any) => {
 }
 
 /**
- * Each new server will recieve the IP adress of a root server so
+ * Each new server will recieve the IP address of a root server so
  * it can call this method on the root server
  * 
  * @param req 
@@ -282,7 +282,7 @@ export const recieveNewBroadCast = (req: any, res: any) => {
     res.json(knownPeers);
     const body = req.body;
     const newNode: PeerNode = {
-        ipAdress: body.ipAdress,
+        ipAddress: body.ipAddress,
         port: body.port,
     }
     blockChain.addPeer(newNode);
@@ -309,7 +309,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
     const rootPeer: PeerNode = blockChain.rootNode!;
     try {
 
-        const url = `http://${rootPeer.ipAdress}:${rootPeer.port}/block/newBroadcast`;
+        const url = `http://${rootPeer.ipAddress}:${rootPeer.port}/block/newBroadcast`;
         //console.log(blockChain);
         // Temp for debugging
         //console.log('initial broadcast url', url);
@@ -318,7 +318,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
                 if (res.status == 200) {
                     const newPeers: PeerNode[] = res.data.map((item: any) => ({
                         port: item.port,
-                        ipAdress: item.ipAdress,
+                        ipAddress: item.ipAddress,
                     }));
                     return newPeers;
                 } else {
@@ -334,7 +334,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
         blockChain.setStatus(Status.RUNNING);
         if (fetchedNewPeers.length > 0) {
             fetchedNewPeers.forEach(peer => {
-                const url2 = `http://${peer.ipAdress}:${peer.port}/block/broadcast`;
+                const url2 = `http://${peer.ipAddress}:${peer.port}/block/broadcast`;
                 //console.log('second url called', url2, peer);
 
                 blockChain.addPeer(peer);
@@ -372,10 +372,13 @@ export const getChain = (req: any, res: any) => {
  */
 export const purchase = (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
-    const { name, adress, price } = req.body;
+    const { name, address, price } = req.body;
+    console.log(req.body);
     const transaction: TransactionData = {
+        previousOwner: undefined,
+        id: undefined,
         newOwner: name,
-        adress: adress,
+        address: address,
         price: price,
     }
     blockChain.addTransaction(transaction);
