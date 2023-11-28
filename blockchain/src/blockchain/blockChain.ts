@@ -129,21 +129,29 @@ class BlockChain {
         return this.blockChain;
     }
 
-    async resolveConflicts(){
+    async resolveConflicts(): Promise<void>{
 
-        var newChain: undefined| Block[] = undefined
-
-        const peerChains: Block[][] = await getPeerChains(this.peers);
-        let max = this.blockChain.length
-        peerChains.forEach((chain: Block[]) => {
-            if (chain.length > max && this.validateBlock(chain)){
-                newChain = chain;
+        return new Promise<void>(async (resolve, reject) => {
+            try {
+                const peerChains: Block[][] = await getPeerChains(this.peers);
+                let max = this.blockChain.length;
+                let newChain: Block[] | undefined = undefined;
+    
+                peerChains.forEach((chain: Block[]) => {
+                    if (chain.length > max && this.validateBlock(chain)) {
+                        newChain = chain;
+                    }
+                });
+    
+                if (newChain) {
+                    this.blockChain = newChain;
+                }
+    
+                resolve(); // Resolve the promise if everything succeeded
+            } catch (error) {
+                reject(error); // Reject the promise if there's an error
             }
-
-        })
-        if (newChain){
-            this.blockChain = newChain;
-        }
+        });
     }
 
     async newBlock() {
@@ -171,11 +179,11 @@ class BlockChain {
 
         // Alert peers the pending transactions have been done.
         succesfulMine(this.peers, newBlock.information);
-        const numSynchronization = 2;
-        const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(this.peers,numSynchronization );
-            if (peersForSynchronization) {
-                synchronizeChains(peersForSynchronization);
-            }
+        // const numSynchronization = 1;
+        // const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(this.peers,numSynchronization );
+        //     if (peersForSynchronization) {
+        //         synchronizeChains(peersForSynchronization);
+        //     }
         
     }
 

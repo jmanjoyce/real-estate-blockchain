@@ -1,5 +1,5 @@
 import express from "express";
-import { getStatus, mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
+import { dump, getStatus, mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
 
@@ -25,6 +25,11 @@ router.post('/purchase', purchase);
  * 
  */
 router.get('/start', startBlockChain);
+
+/**
+ * 
+ */
+router.get('/dump', dump);
 
 /**
  * 

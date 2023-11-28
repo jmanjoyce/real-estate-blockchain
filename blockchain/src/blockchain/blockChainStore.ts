@@ -441,3 +441,19 @@ export const getStatus = (req: any, res: any) => {
     }
     res.json(status);
 }
+
+/**
+ * Debugging method
+ * 
+ * @param req 
+ * @param res 
+ */
+export const dump = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const blocks: Block[] = blockChain.getBlockChain();
+    const pendingTransaction: TransactionData[] = blockChain.getPendingTransaction();
+    console.log('transactions', pendingTransaction);
+    console.log('blocks', blocks); 
+    
+
+}
