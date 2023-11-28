@@ -74,7 +74,8 @@ export default defineComponent({
         this.address = place.name;
         console.log(place);
 
-        // What we can do to make sure it is an adress is figure out if it starts with a number
+        // What we can do to make sure it is an address is figure out if it starts with a number
+        
 
 
         this.entered = true;

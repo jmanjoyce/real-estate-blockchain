@@ -116,17 +116,25 @@ export default defineComponent({
           console.log(res);
         });
     },
-    async mineNewBlock(id: number) {
-      const info = {
-        id: id,
-      };
+    async mineNewBlock(index: number) {
+     
       // Endpoint not tested yet
+      const node = this.nodes![index];
+      const url = `http://${node.ipAddress}:${node.port}/mineNewBlock`
       await axios
-        .post("http://localhost:3001/mineNewBlock", info)
+        .post(url)
         .then((res) => {
           console.log(res);
         });
     },
+    dump(){
+      this.nodes?.forEach(node => {
+        const url = `http://${node.ipAddress}:${node.port}/dump`
+        axios.get(url);
+      })
+    },
+    
+    
     async startNode(index: number){
       const node: Node | undefined = this.nodes?.at(index);
       if (node){

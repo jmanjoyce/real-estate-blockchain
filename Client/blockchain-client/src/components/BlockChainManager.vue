@@ -34,7 +34,7 @@
             <td>
               <v-btn v-if="item.status as any != 2" :color="item.status as any == 1 ? 'red' : 'green'" size="small" @click="start(index)">{{
                 item.status as any == 1 ? 'Stop' : 'Start' }}</v-btn>
-              <v-btn v-if="item.status" size="small" color="black">Mine</v-btn>
+              <v-btn v-if="item.status" size="small" @click="mineNewBlock(index)" color="black">Mine</v-btn>
             </td>
           </tr>
         </tbody>
@@ -50,7 +50,6 @@
       </div>
       <div class="button">
         <v-btn size="small" color="purple" @click="mineNewBlock">Mine new block</v-btn>
-
       </div>
     </div>
 
@@ -88,9 +87,8 @@ export default defineComponent({
     async startBlockChain() {
       
     },
-    mineNewBlock(){
-      console.log('emmiting');
-      this.$emit('mine', 0);
+    mineNewBlock(index: number){      
+      this.$emit('mine', index);
     },
     start(index: any){
       console.log(index);
