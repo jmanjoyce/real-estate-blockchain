@@ -38,7 +38,7 @@ export default defineComponent({
 
     // Not stable couldn't get enviorment variables wokring yet.
     console.log(process.env.MAPS_KEY);
-    const key = "";
+    const key = "AIzaSyAoNhHvaCN2tGTvuFmFnvtOntKEDp6xtAA&libraries";
     script.src = `https://maps.googleapis.com/maps/api/js?key=${key}=places`;
     script.async = true;
     script.defer = true;
@@ -75,7 +75,17 @@ export default defineComponent({
         console.log(place);
 
         // What we can do to make sure it is an address is figure out if it starts with a number
-        
+        const formatted_addr = place.formatted_address;
+        console.log("formatted add", formatted_addr);
+
+        const numCommas = formatted_addr.match(/,/g).length;
+        if(numCommas < 3){
+          //alert 
+          console.log("no street address, too few commas :(");
+        } else if (place.address_components[0].types != "street_number"){
+          console.log("no street number ripppp");
+        }
+
 
 
         this.entered = true;
