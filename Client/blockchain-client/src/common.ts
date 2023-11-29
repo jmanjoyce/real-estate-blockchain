@@ -22,3 +22,14 @@ export interface StatusDto {
     status: Status,
     message: string,
 }
+
+export interface AdressInfoReqDto {
+    address: string,
+}
+
+export interface AdressInfo {
+    address: string,
+    price: number,
+    owned: boolean;
+    previousOwner?: string,
+}

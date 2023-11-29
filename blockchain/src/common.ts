@@ -13,12 +13,12 @@ export interface TransactionData {
     id?:string,
     previousOwner?: string,
     newOwner: string,
-    adress: string,
+    address: string,
     price: number,
 }
 
 export interface PeerNode {
-    ipAdress: string,
+    ipAddress: string,
     port: string,
 }
 

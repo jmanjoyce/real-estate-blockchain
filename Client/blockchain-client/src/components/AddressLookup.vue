@@ -1,37 +1,46 @@
 <template>
   <div>
-  <v-container>
-    <v-row>
-      <v-col cols="12" sm="6">
-        <v-text-field v-model="address" label="Enter your address" outlined ref="autocompleteInput"></v-text-field>
-      </v-col>
-    </v-row>
-  </v-container>
   
-    <div ref="map" style="height: 300px;"></div>
+  <v-text-field width="300" @input="textChange" v-model="address" label="Enter your address" outlined ref="autocompleteInput"></v-text-field>
+  <div v-show="entered" class="map-container">
+    <div  ref="map" style="height: 200px;"></div>
+    </div>
  
 </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { PropType, defineComponent } from "vue";
 
 declare const google: any;
 
 export default defineComponent({
   name: "AddressLookup",
+  props: {
+    parentAddress: Object as PropType<string>,
+  },
+  emits: ['text-change'],
   data(): {
-    address: string;
     map: any;
     marker: any;
     entered: boolean,
+    address: string
   } {
     return {
-      address: "",
       map: null,
       marker: null,
       entered: false,
+      address: this.parentAddress ?? "",
     };
+  },
+  watch: {
+    parentAddress(newValue){
+      //console.log('watched');
+      this.address = newValue;
+      if (newValue == ''){
+        this.entered = false;
+      } 
+    }
   },
   mounted() {
     const script = document.createElement("script");
@@ -51,6 +60,9 @@ export default defineComponent({
     
   },
   methods: {
+    textChange(){
+      this.$emit('text-change', this.address);
+    },
     initAutocomplete() {
       const inputRef = this.$refs.autocompleteInput as HTMLInputElement;
       const mapElement = this.$refs.map;
@@ -73,6 +85,7 @@ export default defineComponent({
         const place = autocomplete.getPlace();
         this.address = place.name;
         console.log(place);
+        this.entered = true;
 
         // What we can do to make sure it is an address is figure out if it starts with a number
         const formatted_addr = place.formatted_address;
@@ -137,5 +150,10 @@ export default defineComponent({
 </script>
 
 <style>
-/* Add your custom styles here */
+
+.map-container {
+  margin-bottom: 5px;
+
+}
+
 </style>

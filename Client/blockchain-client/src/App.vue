@@ -2,23 +2,22 @@
 <template>
   <div class="top">
     <div class="item">
-      <BlockChainManager v-if="nodes" @start="startNode" @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
+      <BlockChainManager v-if="nodes" @start="startNode" @dump="dump" @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
     </div>
     <div class="item">
-      <RealEstate @purchase="purchase"></RealEstate>
+      <RealEstate :addressInfo="currentAdressInfo" @get-address-info="getCurrentAddressInfo" @purchase="purchase"></RealEstate>
     </div>
-    <div class="item">
+    <!-- <div class="item">
       <AddressLookup></AddressLookup>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import BlockChainManager from "./components/BlockChainManager.vue";
-import { Node, Purchase, Status, StatusDto } from "./common";
+import { AdressInfo, AdressInfoReqDto, Node, Purchase, Status, StatusDto } from "./common";
 import RealEstate from "./components/RealEstate.vue";
-import AddressLookup from "./components/AddressLookup.vue";
 const data = require("./assets/nodes.json");
 import axios from "axios";
 // const dotenv = require('dotenv');
@@ -37,14 +36,16 @@ export default defineComponent({
   components: {
     BlockChainManager,
     RealEstate,
-    AddressLookup,
+    // AddressLookup,
   },
 
   data(): {
     nodes: Node[] | undefined;
+    currentAdressInfo: AdressInfo | undefined,
   } {
     return {
       nodes: undefined,
+      currentAdressInfo: undefined,
     };
   },
   async mounted() {
@@ -65,6 +66,24 @@ export default defineComponent({
   },
 
   methods: {
+    async getCurrentAddressInfo(address: string){
+      const node: Node = this.nodes![0];
+      const url = `http://${node.ipAddress}:${node.port}/addressInfo`;
+      const req: AdressInfoReqDto = {
+          address:address,
+      }
+      axios.post(url, req).then(res => {
+        const response: AdressInfo = res.data;
+        this.currentAdressInfo = response;
+        console.log(response);
+
+      }).catch(err => {
+        console.log("error getting address details from blockchain", err);
+      })
+
+      
+
+    },
     async refresh() {
       const nodesInfo: Node[] = [];
       const promises = parsedData.map((node) => {
@@ -81,8 +100,7 @@ export default defineComponent({
             return nodeInfo;
           })
           .catch((error) => {
-            if (error.code === "ECONNREFUSED") {
-              console.log("Request refused", url);
+              console.log("Request refused", url, error);
               const nodeInfo: Node = {
                 ipAddress: node.ipAddress,
                 port: node.port,
@@ -90,10 +108,6 @@ export default defineComponent({
                 status: Status.OFFLINE,
               };
               return nodeInfo;
-            } else {
-              console.error('Error getting info', error);
-              return null;
-            }
           });
       });
 

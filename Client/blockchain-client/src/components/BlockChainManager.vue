@@ -32,9 +32,11 @@
             <td>{{ item.location }}</td>
             <td>{{ item.status }}</td>
             <td>
-              <v-btn v-if="item.status as any != 2" :color="item.status as any == 1 ? 'red' : 'green'" size="small" @click="start(index)">{{
+              <div v-show="(item.status as any != 'Offline')" >
+              <v-btn :color="item.status as any == 1 ? 'red' : 'green'" size="small" @click="start(index)">{{
                 item.status as any == 1 ? 'Stop' : 'Start' }}</v-btn>
-              <v-btn v-if="item.status" size="small" @click="mineNewBlock(index)" color="black">Mine</v-btn>
+              <v-btn size="small" @click="mineNewBlock(index)" color="black">Mine</v-btn>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -67,7 +69,7 @@ import { Node } from '@/common';
 
 export default defineComponent({
   name: 'BlockChainManager',
-  emits: ['mine', 'start'],
+  emits: ['mine', 'start', 'dump'],
   props: {
     machines: Object as PropType<Node[]>,
   },
@@ -84,7 +86,9 @@ export default defineComponent({
     }
   },
   methods: {
-    async startBlockChain() {
+    startBlockChain() {
+      this.$emit('dump');
+      console.log(this.machines![0].status as any == 'Offline');
       
     },
     mineNewBlock(index: number){      

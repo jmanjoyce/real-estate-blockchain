@@ -26,8 +26,8 @@ class BlockChain {
         this.pendingTransactionData = [];
         this.peers = peers ?? [];
         this.node = {
-            // ipAdress: os.networkInterfaces()['eth0'][0].address,
-            ipAdress: process.env.IP ?? 'localhost',
+            // ipAddress: os.networkInterfaces()['eth0'][0].address,
+            ipAddress: process.env.IP ?? 'localhost',
             port: process.env.PORT ?? '3000',
         }
         
@@ -35,7 +35,7 @@ class BlockChain {
             process.env.ROOT_PORT !== undefined) {
             // Root variable set means is root
             this.rootNode = {
-                ipAdress: process.env.ROOT_IP,
+                ipAddress: process.env.ROOT_IP,
                 port: process.env.ROOT_PORT,
             }
             this.status = Status.READY;
