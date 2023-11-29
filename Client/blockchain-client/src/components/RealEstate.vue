@@ -7,8 +7,20 @@
             <v-sheet width="300" class="mx-auto">
                 <v-form ref="form">
                     <v-text-field v-model="name" :counter="10" :rules="nameRules" label="Name" required></v-text-field>
-                    <v-text-field v-model="address" :counter="10" label="Address" required></v-text-field>
-                    <v-text-field v-model="price" type="number" :counter="10" label="Price" required></v-text-field>
+                    <AddressLookup :parent-address="address" @text-change="updateAdress"></AddressLookup>
+                    <v-card v-if="addressInfo">
+                        <v-card-title>
+                           {{ addressInfo.address }}
+                        </v-card-title>
+                        <v-card-subtitle>
+                            {{  addressInfo.price }}
+                        </v-card-subtitle>
+                        <v-card-text>
+                            {{ addressInfo.owned ? 'unowned': addressInfo.previousOwner }}
+                        </v-card-text>
+                    
+                    </v-card>
+                   
 
                     <div class="d-flex flex-column">
                         <v-btn color="green" class="mt-4"  block @click="submit">
@@ -28,11 +40,19 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { Purchase } from '../common'
+import { AdressInfo, Purchase } from '../common'
+import AddressLookup from './AddressLookup.vue';
+import { PropType } from 'vue';
 
 
 export default defineComponent({
     emits: ['purchase'],
+    components: {
+        AddressLookup,
+    },
+    props: {
+        addressInfo: Object as PropType<AdressInfo | undefined>       
+    },
     data(): {
         name: string,
         address: string,
@@ -46,13 +66,16 @@ export default defineComponent({
             ],
             name: '',
             address: '',
-            price: '',
+            price: '100',
 
         }
     },
     methods: { 
-        submit() {
+        updateAdress(adress: string){
+            this.address = adress;
 
+        },
+        submit() {
             const purchase: Purchase = {
                 name: this.name,
                 address: this.address,
@@ -64,6 +87,8 @@ export default defineComponent({
 
         },
         reset() {
+            this.name = '';
+            this.address = '';
 
         }
 
@@ -78,6 +103,5 @@ export default defineComponent({
 .top {
     display: flex;
     flex-direction: column;
-
 }
 </style>

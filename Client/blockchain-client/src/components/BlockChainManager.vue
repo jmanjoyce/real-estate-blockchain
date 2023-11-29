@@ -32,9 +32,11 @@
             <td>{{ item.location }}</td>
             <td>{{ item.status }}</td>
             <td>
-              <v-btn v-if="item.status as any != 2" :color="item.status as any == 1 ? 'red' : 'green'" size="small" @click="start(index)">{{
+              <div v-show="(item.status as any != 'Offline')" >
+              <v-btn :color="item.status as any == 1 ? 'red' : 'green'" size="small" @click="start(index)">{{
                 item.status as any == 1 ? 'Stop' : 'Start' }}</v-btn>
-              <v-btn v-if="item.status" size="small" @click="mineNewBlock(index)" color="black">Mine</v-btn>
+              <v-btn size="small" @click="mineNewBlock(index)" color="black">Mine</v-btn>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -86,6 +88,7 @@ export default defineComponent({
   methods: {
     startBlockChain() {
       this.$emit('dump');
+      console.log(this.machines![0].status as any == 'Offline');
       
     },
     mineNewBlock(index: number){      
