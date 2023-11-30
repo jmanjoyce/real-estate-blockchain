@@ -1,7 +1,7 @@
 import { Block, PeerNode, TransactionData } from '../common';
 import { createHash, randomBytes } from 'crypto';
 import { pickRandomElements } from './utils';
-import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine, synchronizeChains } from './blockChainStore';
+import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine, synchronizeChains, getPendingTransactions } from './blockChainStore';
 const os = require('os');
 
 
@@ -9,6 +9,11 @@ export enum Status {
     READY,
     RUNNING,
     OFFLINE,
+}
+
+export interface TransactionWithTimeStamp{
+    transaction: TransactionData,
+    timeStamp: Date,
 }
 
 
@@ -47,6 +52,33 @@ class BlockChain {
     getStatus(): Status{
         return this.status;
 
+    }
+
+    lookUpAdress(address: string): TransactionWithTimeStamp | null {
+        const res: TransactionWithTimeStamp[] = [];
+
+        // TODO this can be definitely be written more concisely, it's hacky.
+        // Method is returning with the first match it finds. needs to be written better
+        this.blockChain.reverse().some((block: Block) => {
+            const timeStamp = block.timeStamp;
+            block.information.some(transaction => {
+                console.log('transaction addr', transaction.address);
+                if (transaction.address == address){
+                    const match: TransactionWithTimeStamp = { 
+                        timeStamp: timeStamp,
+                        transaction: transaction
+                   }
+                   res.push(match);
+                   return true;
+                }
+                return false;
+            })
+            if (res.length > 0 ){
+                return true;
+            }
+            return false;
+        });
+        return res.length > 0? res[0]: null;
     }
 
     setStatus(status: Status) {
@@ -134,6 +166,8 @@ class BlockChain {
         return new Promise<void>(async (resolve, reject) => {
             try {
                 const peerChains: Block[][] = await getPeerChains(this.peers);
+
+                //console.log('peer chains', peerChains);
                 let max = this.blockChain.length;
                 let newChain: Block[] | undefined = undefined;
     
@@ -157,6 +191,8 @@ class BlockChain {
     async newBlock() {
         // Get transaction data from neighbors; (maybe) so we don't have to synchronize block
         console.log('starting mining');
+        const newTransactionData: TransactionData[] = await getPendingTransactions(this.peers);
+        this.updatePendingTransactions(newTransactionData);
         await this.resolveConflicts();
         const prevBlock: Block | undefined = this.blockChain.length > 0 ? this.blockChain[this.blockChain.length - 1] : undefined;
         const newNonce: string = prevBlock ? this.mine(prevBlock) : BlockChain.nonce();

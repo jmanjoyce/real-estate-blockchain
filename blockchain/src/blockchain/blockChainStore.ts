@@ -1,23 +1,24 @@
 
-import { Block, PeerNode, StatusDto, TransactionData } from '../common';
-import BlockChain from './blockChain';
+import { AdressInfoResDto, Block, PeerNode, StatusDto, TransactionData } from '../common';
+import BlockChain, { TransactionWithTimeStamp } from './blockChain';
 import axios from 'axios';
 import { Status } from './blockChain';
+import { generateRandomPrice } from './utils';
 
 /**
  * 
- * TODO for part 2
- * Test Mining, synchronization, replication. ECT
- * Currently working on setting up testing for machines mining and starting stopping
+ * TODO for part 3
+ * In depth testing of mining and replication functionality. This includes synchronization
  * Optional Implementation of stopping machine.
  * 
+ * Need to validate pending purchase, can't have same adress already being purchased
  * 
  * Part 3 
- * Implement testing features on front end. Seems like a good idea to have a page wit
+ * Need feedback for purchases and validation, need to consider pending purchases.
  * 
  * Part 4, 
- * Make this project a stateless applicatation using mongo (extra hard haha)
- * we will see.
+ * Make this project a stateless applicatation using mongo
+ * 
  * 
  */
 
@@ -212,6 +213,7 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
             .then(res => {
                 if (res.status == 200) {
                     try {
+                        console.log('data',res.data);
                         const block: Block[] = res.data.map((item: any) => ({
                             index: item.index,
                             timeStamp: new Date(item.timeStamp),
@@ -225,6 +227,9 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
                                 price: data.price,
                             }))
                         }));
+
+                        console.log('block', block);
+                        
                         chains.push(block);
                     } catch (err) {
                         console.log('error processing blockchain');
@@ -307,6 +312,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
     }
     const nodeInfo: PeerNode = blockChain.node;
     const rootPeer: PeerNode = blockChain.rootNode!;
+    blockChain.addPeer(rootPeer);
     try {
 
         const url = `http://${rootPeer.ipAddress}:${rootPeer.port}/block/newBroadcast`;
@@ -458,5 +464,29 @@ export const dump = (req: any, res: any) => {
     console.log('transactions', pendingTransaction);
     console.log('blocks', blocks); 
     
+
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const getAdressInfo = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const address: string = req.body.address;
+    const info: TransactionWithTimeStamp | null = blockChain.lookUpAdress(address);
+    console.log('returned', info);
+    const response: AdressInfoResDto = {
+        address: address,
+        price: info? Math.floor(info.transaction.price * 1.2) : generateRandomPrice(),
+        owned: info? true: false,
+        previousOwner: info? info.transaction.newOwner: undefined,
+    }
+    
+    res.json(response);
+
+
+
 
 }

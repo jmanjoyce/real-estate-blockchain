@@ -1,5 +1,5 @@
 import express from "express";
-import { dump, getStatus, mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
+import { dump, getAdressInfo, getStatus, mineNewBlock, purchase, startBlockChain } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
 
 
@@ -36,10 +36,18 @@ router.get('/dump', dump);
  */
 router.get('/status', getStatus);
 
+
+// This should probably be changed to get with a query
+/**
+ * 
+ */
+router.post('/addressInfo', getAdressInfo);
+
 // /**
 //  * 
 //  */
 // router.get('/startBlockChain', startBlockChain );
+
 
 
 
