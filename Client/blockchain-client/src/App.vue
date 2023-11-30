@@ -5,7 +5,7 @@
       <BlockChainManager v-if="nodes" @start="startNode" @dump="dump" @mine="mineNewBlock" :machines="nodes"></BlockChainManager>
     </div>
     <div class="item">
-      <RealEstate :addressInfo="currentAdressInfo" @get-address-info="getCurrentAddressInfo" @purchase="purchase"></RealEstate>
+      <RealEstate :addressInfo="currentAdressInfo" @reset-address-info="resetAddressInfo" @get-address-info="getCurrentAddressInfo" @purchase="purchase"></RealEstate>
     </div>
     <!-- <div class="item">
       <AddressLookup></AddressLookup>
@@ -82,6 +82,10 @@ export default defineComponent({
       })
 
       
+
+    },
+    resetAddressInfo(){
+      this.currentAdressInfo = undefined;
 
     },
     async refresh() {

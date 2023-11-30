@@ -1,7 +1,7 @@
 <template>
   <div>
   
-  <v-text-field width="300" @input="textChange" v-model="address" label="Enter your address" outlined ref="autocompleteInput"></v-text-field>
+  <v-text-field width="300" @input="textChange" v-model="address" label="Enter the address you want to buy" outlined ref="autocompleteInput"></v-text-field>
   <div v-show="entered" class="map-container">
     <div  ref="map" style="height: 200px;"></div>
     </div>
@@ -19,7 +19,7 @@ export default defineComponent({
   props: {
     parentAddress: Object as PropType<string>,
   },
-  emits: ['text-change'],
+  emits: ['text-change', 'get-address-info'],
   data(): {
     map: any;
     marker: any;
@@ -84,8 +84,11 @@ export default defineComponent({
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
         this.address = place.name;
-        console.log(place);
+        //console.log('emmiting', this.address);
         this.entered = true;
+        
+        this.$emit('get-address-info', this.address);
+        this.$emit('text-change', this.address);
 
         // What we can do to make sure it is an address is figure out if it starts with a number
         
