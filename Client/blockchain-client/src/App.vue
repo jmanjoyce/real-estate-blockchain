@@ -6,14 +6,15 @@
     :type="alert?.type"
     :title="alert?.title"
     :text="alert?.text"
+    style="font-size: 18px"
   >
-  <v-progress-linear
-        v-show="true"
-        v-model="progress"
-        :height="10"
-        color="white"
-      ></v-progress-linear>
-</v-alert>
+    <v-progress-linear
+      v-show="true"
+      v-model="progress"
+      :height="10"
+      color="white"
+    ></v-progress-linear>
+  </v-alert>
   <div class="top">
     <div class="item">
       <BlockChainManager
@@ -21,6 +22,7 @@
         v-if="nodes"
         @start="startNode"
         @dump="dump"
+        @get-pending="getPendingTransactions"
         @mine="mineNewBlock"
         :machines="nodes"
       ></BlockChainManager>
@@ -32,6 +34,7 @@
         @reset-address-info="resetAddressInfo"
         @get-address-info="getCurrentAddressInfo"
         @purchase="purchase"
+        @invalid-address="invalidAddress"
       ></RealEstate>
     </div>
     <!-- <div class="item">
@@ -50,6 +53,7 @@ import {
   Purchase,
   Status,
   StatusDto,
+  TransactionData,
 } from "./common";
 import RealEstate from "./components/RealEstate.vue";
 const data = require("./assets/nodes.json");
@@ -86,8 +90,10 @@ export default defineComponent({
     alert: Alert | undefined;
     progress: number;
     intervalId: any;
+    pendingTransactions: TransactionData[] | undefined;
   } {
     return {
+      pendingTransactions: undefined,
       progress: 0,
       intervalId: null,
       nodes: undefined,
@@ -132,6 +138,14 @@ export default defineComponent({
     resetAddressInfo() {
       this.currentAdressInfo = undefined;
     },
+    invalidAddress() {
+      const alert: Alert = {
+        type: "warning",
+        title: "Invalid Address",
+        text: "You must enter a valid street address (with number)",
+      };
+      this.alertUser(alert);
+    },
     alertUser(alert: Alert) {
       this.alert = alert;
       this.showAlert = true;
@@ -141,11 +155,12 @@ export default defineComponent({
         this.progress = this.progress - 1; // Decrease progress every second
         //console.log(this.progress);
         if (this.progress === 0) {
-          setInterval(()=>{
-            clearInterval(this.intervalId);
+          setInterval(() => {
+            this.intervalId = null;
             this.showAlert = false;
-          }, 500)
-           // Hide alert when progress completes
+          }, 500);
+          this.intervalId = null;
+          // Hide alert when progress completes
         }
       }, 25); // Update progress every 100 milliseconds
     },
@@ -222,6 +237,7 @@ export default defineComponent({
           text: `${node.ipAddress} has succesfully mined block`,
         };
         this.alertUser(alert);
+        this.pendingTransactions = undefined;
       });
     },
     dump() {
@@ -229,6 +245,26 @@ export default defineComponent({
         const url = `http://${node.ipAddress}:${node.port}/dump`;
         axios.get(url);
       });
+    },
+    async getPendingTransactions(index: number) {
+      const node: Node | undefined = this.nodes?.at(index);
+      try {
+        if (node) {
+          const url = `http://${node.ipAddress}:${node.port}/allPendingTransaction`;
+          axios
+            .get(url)
+            .then((res) => {
+              const transactionData: TransactionData[] = res.data;
+              this.pendingTransactions = transactionData;
+              console.log("Recieved Transaction Data", transactionData);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
+      } catch (err) {
+        console.log("error recieving transaction data", err);
+      }
     },
 
     async startNode(index: number) {

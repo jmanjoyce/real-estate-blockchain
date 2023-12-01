@@ -38,3 +38,6 @@ export interface AdressInfoResDto {
     previousOwner?: string,
 }
 
+export interface ValidPurchaseDto {
+    valid: boolean,
+}

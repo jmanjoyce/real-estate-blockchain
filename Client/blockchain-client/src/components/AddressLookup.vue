@@ -1,12 +1,17 @@
 <template>
   <div>
-  
-  <v-text-field width="300" @input="textChange" v-model="address" label="Enter the address you want to buy" outlined ref="autocompleteInput"></v-text-field>
-  <div v-show="entered" class="map-container">
-    <div  ref="map" style="height: 200px;"></div>
+    <v-text-field
+      width="300"
+      @input="textChange"
+      v-model="address"
+      label="Enter the address you want to buy"
+      outlined
+      ref="autocompleteInput"
+    ></v-text-field>
+    <div v-show="entered" class="map-container">
+      <div ref="map" style="height: 200px"></div>
     </div>
- 
-</div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -19,12 +24,12 @@ export default defineComponent({
   props: {
     parentAddress: Object as PropType<string>,
   },
-  emits: ['text-change', 'get-address-info'],
+  emits: ["text-change", "get-address-info", "alert", "invalid-address"],
   data(): {
     map: any;
     marker: any;
-    entered: boolean,
-    address: string
+    entered: boolean;
+    address: string;
   } {
     return {
       map: null,
@@ -34,13 +39,13 @@ export default defineComponent({
     };
   },
   watch: {
-    parentAddress(newValue){
+    parentAddress(newValue) {
       //console.log('watched');
       this.address = newValue;
-      if (newValue == ''){
+      if (newValue == "") {
         this.entered = false;
-      } 
-    }
+      }
+    },
   },
   mounted() {
     const script = document.createElement("script");
@@ -57,18 +62,19 @@ export default defineComponent({
     };
 
     document.head.appendChild(script);
-    
   },
   methods: {
-    textChange(){
-      this.$emit('text-change', this.address);
+    textChange() {
+      this.$emit("text-change", this.address);
+    },
+    alertInvalidAddress(){
+      this.$emit("invalid-address");
     },
     initAutocomplete() {
       const inputRef = this.$refs.autocompleteInput as HTMLInputElement;
       const mapElement = this.$refs.map;
       const autocomplete = new google.maps.places.Autocomplete(inputRef, {
         types: ["address"],
-
       });
 
       this.map = new google.maps.Map(mapElement, {
@@ -80,19 +86,26 @@ export default defineComponent({
         map: this.map,
       });
 
-
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
         this.address = place.name;
         //console.log('emmiting', this.address);
         this.entered = true;
-        
-        this.$emit('get-address-info', this.address);
-        this.$emit('text-change', this.address);
+
+        this.$emit("get-address-info", this.address);
+        this.$emit("text-change", this.address);
 
         // What we can do to make sure it is an address is figure out if it starts with a number
-        
+        const formatted_addr = place.formatted_address;
+        // console.log("formatted add", formatted_addr);
 
+        const numCommas = formatted_addr.match(/,/g).length;
+        if(numCommas < 3){
+          this.alertInvalidAddress();
+        } else if (place.address_components[0].types != "street_number"){
+          this.alertInvalidAddress();
+          console.log("no street number ripppp");
+        }
 
         this.entered = true;
         if (!place.geometry || !place.geometry.location) {
@@ -102,9 +115,6 @@ export default defineComponent({
         // Update the map and marker with the selected location
         this.map.setCenter(place.geometry.location);
         this.marker.setPosition(place.geometry.location);
-       
-
-        
       });
     },
   },
@@ -143,10 +153,7 @@ export default defineComponent({
 </script>
 
 <style>
-
 .map-container {
   margin-bottom: 5px;
-
 }
-
 </style>
