@@ -1,6 +1,7 @@
 import express from "express";
 import { confirmMining,
     getChain,
+    getCurrentPendingTransaction,
     getPendingTransactions,
     mineNewBlock,
     purchase,
@@ -43,7 +44,7 @@ router.post('/synchronize', resolveConflicts);
 /**
  * 
  */
-router.get('/pendingTransactions', getPendingTransactions);
+router.get('/pendingTransactions', getCurrentPendingTransaction);
 
 /**
  * 
@@ -54,5 +55,7 @@ router.post('/newBroadCast', recieveNewBroadCast);
  * 
  */
 router.post('/broadCast', recieveBroadCast);
+
+
 
 export default router;

@@ -4,26 +4,15 @@
       <div>
         <h1>Cluster Manager</h1>
       </div>
-
     </div>
     <div class="table">
-
       <v-table>
         <thead>
           <tr>
-            <th class="text-left">
-              Machine
-            </th>
-            <th class="text-left">
-              Location
-            </th>
-            <th class="text-left">
-              Status
-            </th>
-            <th class="text-left">
-              Actions
-            </th>
-
+            <th class="text-left">Machine</th>
+            <th class="text-left">Location</th>
+            <th class="text-left">Status</th>
+            <th class="text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -32,86 +21,83 @@
             <td>{{ item.location }}</td>
             <td>{{ item.status }}</td>
             <td>
-              <div v-show="(item.status as any != 'Offline')" >
-              <v-btn :color="item.status as any == 1 ? 'red' : 'green'" size="small" @click="start(index)">{{
-                item.status as any == 1 ? 'Stop' : 'Start' }}</v-btn>
-              <v-btn size="small" @click="mineNewBlock(index)" color="black">Mine</v-btn>
+              <div v-show="(item.status as any != 'Offline')">
+                <v-btn
+                  :color="item.status as any == 1 ? 'red' : 'green'"
+                  size="small"
+                  @click="start(index)"
+                  >{{ (item.status as any) == 1 ? "Stop" : "Start" }}</v-btn
+                >
+                <PendingDialog @get-pending="getPending(index)" ></PendingDialog>
+                <!-- <v-btn size="small" @click="mineNewBlock(index)" color="black"
+                  >Mine</v-btn
+                > -->
               </div>
             </td>
           </tr>
         </tbody>
       </v-table>
-
     </div>
     <div class="buttons">
       <div class="button">
-        <v-btn size="small" color='blue' @click="startBlockChain">Start All Nodes</v-btn>
-      </div>
-      <div  class="button">
-        <v-btn size="small" color='red' @click="startBlockChain">Kill Block Chain</v-btn>
+        <v-btn color="blue" @click="startBlockChain">DB dump</v-btn>
       </div>
       <div class="button">
-        <v-btn size="small" color="purple" @click="mineNewBlock">Mine new block</v-btn>
+        <v-btn color="red" @click="startBlockChain">Kill Block Chain</v-btn>
+      </div>
+      <div class="button">
+        <v-btn color="purple" @click="mineNewBlock">Mine new block</v-btn>
       </div>
     </div>
-
   </div>
 </template>
 
 <script lang="ts">
-import { PropType, defineComponent } from 'vue';
-import { Node } from '@/common';
-
-
-
-
-
+import { PropType, defineComponent } from "vue";
+import { Node, TransactionData } from "@/common";
+import PendingDialog from "./PendingDialog.vue";
 
 export default defineComponent({
-  name: 'BlockChainManager',
-  emits: ['mine', 'start', 'dump'],
-  props: {
-    machines: Object as PropType<Node[]>,
-  },
-  data(): {
-    baseUrl: string,
-    //machines: Node[],
-
-  } {
-    return {
-      baseUrl: "localhost:8080",
-      //machines: machines,
-
-
-    }
-  },
-  methods: {
-    startBlockChain() {
-      this.$emit('dump');
-      console.log(this.machines![0].status as any == 'Offline');
-      
+    name: "BlockChainManager",
+    emits: ["mine", "start", "dump", "get-pending"],
+    props: {
+        machines: Object as PropType<Node[]>,
+        pendingTransaction: Object as PropType<TransactionData | undefined>,
     },
-    mineNewBlock(index: number){      
-      this.$emit('mine', index);
+    data(): {
+        baseUrl: string;
+    } {
+        return {
+            baseUrl: "localhost:8080",
+            //machines: machines,
+        };
     },
-    start(index: any){
-      console.log(index);
-      if (this.machines![index].status as any == 1){
-        console.log('running');
-      }
-      if (this.machines![index].status as any == 0){
-        console.log('Emmitting');
-        this.$emit('start', index);
-      }
-      //console.log(this.machines![0].status);
-    }
-  }
+    methods: {
+        getPending(index: number){
+          this.$emit('get-pending', index);
 
-
-
-
-})
-
+        },
+        startBlockChain() {
+            this.$emit("dump");
+            console.log((this.machines![0].status as any) == "Offline");
+        },
+        mineNewBlock(index: number) {
+            this.$emit("mine", index);
+        },
+        start(index: any) {
+            console.log(index);
+            if ((this.machines![index].status as any) == 1) {
+                console.log("running");
+            }
+            if ((this.machines![index].status as any) == 0) {
+                console.log("Emmitting");
+                this.$emit("start", index);
+            }
+            //console.log(this.machines![0].status);
+        },
+    },
+    components: { PendingDialog }
+});
 </script>
 
 <style scoped>
@@ -119,22 +105,17 @@ export default defineComponent({
   display: flex;
   flex-direction: row;
   justify-content: center;
-
 }
 
 .top {
   display: flex;
   flex-direction: column;
-
-
 }
 
 .buttons {
   display: flex;
   flex-direction: row;
   justify-content: center;
-
-
 }
 
 .button {

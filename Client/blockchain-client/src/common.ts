@@ -11,6 +11,13 @@ export interface Purchase {
     price: number,
 
 }
+export interface TransactionData {
+    id?: string,
+    previousOwner?: string,
+    newOwner: string,
+    address: string,
+    price: number,
+}
 
 export enum Status {
     READY = 'Ready',
@@ -32,4 +39,8 @@ export interface AdressInfo {
     price: number,
     owned: boolean;
     previousOwner?: string,
+}
+
+export interface ValidPurchaseDto {
+    valid: boolean,
 }

@@ -1,23 +1,24 @@
 
-import { Block, PeerNode, StatusDto, TransactionData } from '../common';
-import BlockChain from './blockChain';
+import { AdressInfoResDto, Block, PeerNode, StatusDto, TransactionData, ValidPurchaseDto } from '../common';
+import BlockChain, { TransactionWithTimeStamp } from './blockChain';
 import axios from 'axios';
 import { Status } from './blockChain';
+import { generateRandomPrice } from './utils';
 
 /**
  * 
- * TODO for part 2
- * Test Mining, synchronization, replication. ECT
- * Currently working on setting up testing for machines mining and starting stopping
+ * TODO for part 3
+ * In depth testing of mining and replication functionality. This includes synchronization
  * Optional Implementation of stopping machine.
  * 
+ * Need to validate pending purchase, can't have same adress already being purchased
  * 
  * Part 3 
- * Implement testing features on front end. Seems like a good idea to have a page wit
+ * Need feedback for purchases and validation, need to consider pending purchases.
  * 
  * Part 4, 
- * Make this project a stateless applicatation using mongo (extra hard haha)
- * we will see.
+ * Make this project a stateless applicatation using mongo
+ * 
  * 
  */
 
@@ -39,13 +40,22 @@ export const mineNewBlock = (req: any, res: any) => {
  * 
  * @returns 
  */
-export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<TransactionData[]> => {
+export const getPendingTransactions = async (peerNodes: PeerNode[], self: BlockChain | undefined = undefined): Promise<TransactionData[]> => {
     const transactionSet: Set<TransactionData> = new Set();
+
+    // If we want to add transactions of included peer
+    if (self){
+        const localPendingTransactions: TransactionData[] = self.getPendingTransaction();
+        localPendingTransactions.forEach(transaction => {
+            transactionSet.add(transaction);
+        })
+    }
     const promises = peerNodes.map((node) => {
         const url = `http://${node.ipAddress}:${node.port}/block/pendingTransactions`;
         axios.get(url)
             .then(res => {
                 if (res.status == 200) {
+                    console.log(res.data);
                     const transactions: TransactionData[] = res.data.map((item: any) => ({
                         id: item?.id,
                         previousOwner: item?.previousOwner,
@@ -62,8 +72,6 @@ export const getPendingTransactions = async (peerNodes: PeerNode[]): Promise<Tra
             }).catch(error => {
                 console.error("Error getting pending transaction from peer nodes: ", error);
             })
-
-
     });
     await Promise.all(promises);
     return [...transactionSet];
@@ -136,8 +144,8 @@ export const sendChain = (block: BlockChain) => {
  * 
  */
 export const getCurrentPendingTransaction = (req: any, res: any) => {
-    var blockChain = require('../app');
-    const pendingTransaction: TransactionData[] = blockChain.getCurrentPendingTransaction();
+    var blockChain: BlockChain = require('../app');
+    const pendingTransaction: TransactionData[] = blockChain.getPendingTransaction();
     res.json(pendingTransaction);
 
 }
@@ -212,6 +220,7 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
             .then(res => {
                 if (res.status == 200) {
                     try {
+                        console.log('data',res.data);
                         const block: Block[] = res.data.map((item: any) => ({
                             index: item.index,
                             timeStamp: new Date(item.timeStamp),
@@ -225,6 +234,9 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
                                 price: data.price,
                             }))
                         }));
+
+                        console.log('block', block);
+                        
                         chains.push(block);
                     } catch (err) {
                         console.log('error processing blockchain');
@@ -307,6 +319,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
     }
     const nodeInfo: PeerNode = blockChain.node;
     const rootPeer: PeerNode = blockChain.rootNode!;
+    blockChain.addPeer(rootPeer);
     try {
 
         const url = `http://${rootPeer.ipAddress}:${rootPeer.port}/block/newBroadcast`;
@@ -459,4 +472,57 @@ export const dump = (req: any, res: any) => {
     console.log('blocks', blocks); 
     
 
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const getAllPending = async (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const peers: PeerNode[] = blockChain.getPeers();
+    console.log('getting all pending');
+    const pendingTransaction: TransactionData[] = await getPendingTransactions(peers, blockChain);
+    res.json(pendingTransaction);
+
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const getAdressInfo = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const address: string = req.body.address;
+    const info: TransactionWithTimeStamp | null = blockChain.lookUpAdress(address);
+    console.log('returned', info);
+    const response: AdressInfoResDto = {
+        address: address,
+        price: info? Math.floor(info.transaction.price * 1.2) : generateRandomPrice(),
+        owned: info? true: false,
+        previousOwner: info? info.transaction.newOwner: undefined,
+    }
+    
+    res.json(response);
+
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const validatePurchase = async (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app');
+    const address: string = req.body.address;
+    await blockChain.updateTransactionDataFromPeers();
+    const result: boolean = !blockChain.containsTransactionAddress(address);
+    const valid : ValidPurchaseDto = {
+        valid: result,
+    }
+    res.json(valid);
+    
+    
 }
