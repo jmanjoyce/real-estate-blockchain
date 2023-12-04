@@ -1,45 +1,51 @@
 <!-- eslint-disable vue/no-unused-components -->
 <template>
   <v-alert
-    v-show="showAlert && alert"
-    density="compact"
-    :type="alert?.type"
-    :title="alert?.title"
-    :text="alert?.text"
-    style="font-size: 18px"
-  >
-    <v-progress-linear
-      v-show="true"
-      v-model="progress"
-      :height="10"
-      color="white"
-    ></v-progress-linear>
-  </v-alert>
-  <div class="top">
-    <div class="item">
-      <BlockChainManager
-        @alert="alertUser"
-        v-if="nodes"
-        @start="startNode"
-        @dump="dump"
-        @get-pending="getPendingTransactions"
-        @mine="mineNewBlock"
-        :machines="nodes"
-      ></BlockChainManager>
-    </div>
-    <div class="item">
-      <RealEstate
-        @alert="alertUser"
-        :addressInfo="currentAdressInfo"
-        @reset-address-info="resetAddressInfo"
-        @get-address-info="getCurrentAddressInfo"
-        @purchase="purchase"
-        @invalid-address="invalidAddress"
-      ></RealEstate>
-    </div>
-    <!-- <div class="item">
+      v-show="showAlert && alert"
+      density="compact"
+      :type="alert?.type"
+      :title="alert?.title"
+      :text="alert?.text"
+      style="font-size: 18px"
+    >
+      <v-progress-linear
+        v-show="true"
+        v-model="progress"
+        :height="10"
+        color="white"
+      ></v-progress-linear>
+    </v-alert>
+  <div v-if="!signIn">
+    <SingInPage></SingInPage>
+  </div>
+  <div v-if="signIn">
+    <div class="top">
+      <div class="item">
+        <BlockChainManager
+          @alert="alertUser"
+          v-if="nodes"
+          @start="startNode"
+          @dump="dump"
+          :pending-transaction="pendingTransactions"
+          @get-pending="getPendingTransactions"
+          @mine="mineNewBlock"
+          :machines="nodes"
+        ></BlockChainManager>
+      </div>
+      <div class="item">
+        <RealEstate
+          @alert="alertUser"
+          :addressInfo="currentAdressInfo"
+          @reset-address-info="resetAddressInfo"
+          @get-address-info="getCurrentAddressInfo"
+          @purchase="purchase"
+          @invalid-address="invalidAddress"
+        ></RealEstate>
+      </div>
+      <!-- <div class="item">
       <AddressLookup></AddressLookup>
     </div> -->
+    </div>
   </div>
 </template>
 
@@ -58,6 +64,7 @@ import {
 import RealEstate from "./components/RealEstate.vue";
 const data = require("./assets/nodes.json");
 import axios from "axios";
+import SingInPage from "./components/SingInPage.vue";
 // const dotenv = require('dotenv');
 // dotenv.config();
 
@@ -80,8 +87,8 @@ export default defineComponent({
   components: {
     BlockChainManager,
     RealEstate,
-    // AddressLookup,
-  },
+    SingInPage
+},
 
   data(): {
     nodes: Node[] | undefined;
@@ -91,8 +98,10 @@ export default defineComponent({
     progress: number;
     intervalId: any;
     pendingTransactions: TransactionData[] | undefined;
+    signIn: boolean,
   } {
     return {
+      signIn: false,
       pendingTransactions: undefined,
       progress: 0,
       intervalId: null,

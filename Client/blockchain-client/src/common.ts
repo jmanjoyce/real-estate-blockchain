@@ -12,7 +12,7 @@ export interface Purchase {
 
 }
 export interface TransactionData {
-    id?: string,
+    id: string,
     previousOwner?: string,
     newOwner: string,
     address: string,
@@ -43,4 +43,9 @@ export interface AdressInfo {
 
 export interface ValidPurchaseDto {
     valid: boolean,
+}
+
+export interface SignInAtmp {
+    username: string,
+    password: string,
 }

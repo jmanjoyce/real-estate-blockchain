@@ -54,6 +54,10 @@ class BlockChain {
 
     }
 
+    getPeerNode(): PeerNode[]{
+        return this.peers;
+    }
+
     lookUpAdress(address: string): TransactionWithTimeStamp | null {
         const res: TransactionWithTimeStamp[] = [];
 
@@ -125,10 +129,10 @@ class BlockChain {
     }
 
     updatePendingTransactions(processedTransactions: TransactionData[]) {
-        const processedSet: Set<TransactionData> = new Set(processedTransactions);
+        const processedIdSet: Set<string> = new Set(processedTransactions.map(t => t.id));
         this.pendingTransactionData = this.pendingTransactionData
             .filter(entry => {
-                !processedSet.has(entry)
+                !processedIdSet.has(entry.id);
             });
 
     }
@@ -249,11 +253,15 @@ class BlockChain {
     }
 
     replicateTransaction(data: TransactionData[]) {
-        const transactionSet: Set<TransactionData> = new Set(this.pendingTransactionData);
+        const transactionIdSet: Set<string> = new Set(this.pendingTransactionData.map(t => t.id));
+        const transactions: TransactionData[] = [];
         data.forEach(transaction => {
-            transactionSet.add(transaction);
+            if (!transactionIdSet.has(transaction.id)){
+                transactionIdSet.add(transaction.id);
+                transactions.push(transaction);
+            }
         })
-        this.pendingTransactionData = [...transactionSet];
+        this.pendingTransactionData = transactions;
     }
 
     static hash(block: Block, nonce?: string) {

@@ -4,6 +4,7 @@ import BlockChain from './blockchain/blockChain'
 import cors from 'cors';
 import serverRoutes from './routes/blockChainRoutes';
 import { initialBroadCast } from './blockchain/blockChainStore';
+import mongoose from 'mongoose';
 
 const app = express();
 
@@ -17,6 +18,18 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = 3000;
 app.listen(3000, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+
+
+// Connect to MongoDB
+
+mongoose.connect('mongodb://mongodb:27017/app', {  });
+    
+const db: mongoose.Connection = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+    console.log('Connected to MongoDB');
 });
 
 

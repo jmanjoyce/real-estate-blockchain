@@ -28,7 +28,11 @@
                   @click="start(index)"
                   >{{ (item.status as any) == 1 ? "Stop" : "Start" }}</v-btn
                 >
-                <PendingDialog @get-pending="getPending(index)" ></PendingDialog>
+                <PendingDialog
+                  :pending-transactions="pendingTransaction"
+                  @mine="mineNewBlock(index)"
+                  @get-pending="getPending(index)"
+                ></PendingDialog>
                 <!-- <v-btn size="small" @click="mineNewBlock(index)" color="black"
                   >Mine</v-btn
                 > -->
@@ -58,45 +62,44 @@ import { Node, TransactionData } from "@/common";
 import PendingDialog from "./PendingDialog.vue";
 
 export default defineComponent({
-    name: "BlockChainManager",
-    emits: ["mine", "start", "dump", "get-pending"],
-    props: {
-        machines: Object as PropType<Node[]>,
-        pendingTransaction: Object as PropType<TransactionData | undefined>,
+  name: "BlockChainManager",
+  emits: ["mine", "start", "dump", "get-pending"],
+  props: {
+    machines: Object as PropType<Node[]>,
+    pendingTransaction: Object as PropType<TransactionData[] | undefined>,
+  },
+  data(): {
+    baseUrl: string;
+  } {
+    return {
+      baseUrl: "localhost:8080",
+      //machines: machines,
+    };
+  },
+  methods: {
+    getPending(index: number) {
+      this.$emit("get-pending", index);
     },
-    data(): {
-        baseUrl: string;
-    } {
-        return {
-            baseUrl: "localhost:8080",
-            //machines: machines,
-        };
+    startBlockChain() {
+      this.$emit("dump");
+      console.log((this.machines![0].status as any) == "Offline");
     },
-    methods: {
-        getPending(index: number){
-          this.$emit('get-pending', index);
-
-        },
-        startBlockChain() {
-            this.$emit("dump");
-            console.log((this.machines![0].status as any) == "Offline");
-        },
-        mineNewBlock(index: number) {
-            this.$emit("mine", index);
-        },
-        start(index: any) {
-            console.log(index);
-            if ((this.machines![index].status as any) == 1) {
-                console.log("running");
-            }
-            if ((this.machines![index].status as any) == 0) {
-                console.log("Emmitting");
-                this.$emit("start", index);
-            }
-            //console.log(this.machines![0].status);
-        },
+    mineNewBlock(index: number) {
+      this.$emit("mine", index);
     },
-    components: { PendingDialog }
+    start(index: any) {
+      console.log(index);
+      if ((this.machines![index].status as any) == 1) {
+        console.log("running");
+      }
+      if ((this.machines![index].status as any) == 0) {
+        console.log("Emmitting");
+        this.$emit("start", index);
+      }
+      //console.log(this.machines![0].status);
+    },
+  },
+  components: { PendingDialog },
 });
 </script>
 

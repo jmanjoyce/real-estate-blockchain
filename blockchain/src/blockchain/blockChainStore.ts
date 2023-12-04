@@ -4,6 +4,8 @@ import BlockChain, { TransactionWithTimeStamp } from './blockChain';
 import axios from 'axios';
 import { Status } from './blockChain';
 import { generateRandomPrice } from './utils';
+import { v4 as uuidv4 } from 'uuid';
+
 
 /**
  * 
@@ -41,30 +43,38 @@ export const mineNewBlock = (req: any, res: any) => {
  * @returns 
  */
 export const getPendingTransactions = async (peerNodes: PeerNode[], self: BlockChain | undefined = undefined): Promise<TransactionData[]> => {
-    const transactionSet: Set<TransactionData> = new Set();
+    const idSet: Set<string> = new Set();
+    const pendingTransaction: TransactionData[] = [];
 
     // If we want to add transactions of included peer
     if (self){
         const localPendingTransactions: TransactionData[] = self.getPendingTransaction();
         localPendingTransactions.forEach(transaction => {
-            transactionSet.add(transaction);
+            if (!idSet.has(transaction.id)){
+                idSet.add(transaction.id);
+                pendingTransaction.push(transaction);
+            }
         })
     }
     const promises = peerNodes.map((node) => {
         const url = `http://${node.ipAddress}:${node.port}/block/pendingTransactions`;
-        axios.get(url)
+        return axios.get(url)
             .then(res => {
                 if (res.status == 200) {
-                    console.log(res.data);
+                    //console.log(res.data);
                     const transactions: TransactionData[] = res.data.map((item: any) => ({
-                        id: item?.id,
+                        id: item.id,
                         previousOwner: item?.previousOwner,
                         price: item.price,
                         address: item.address,
                         newOwner: item.newOwner,
                     }));
                     transactions.forEach((transaction: TransactionData) => {
-                        transactionSet.add(transaction);
+                        console.log('transaction', transaction.id);
+                        if (!idSet.has(transaction.id)){
+                            idSet.add(transaction.id);
+                            pendingTransaction.push(transaction);
+                        }
                     })
                 } else {
                     console.log("Problem collection data from ", url);
@@ -73,8 +83,9 @@ export const getPendingTransactions = async (peerNodes: PeerNode[], self: BlockC
                 console.error("Error getting pending transaction from peer nodes: ", error);
             })
     });
+    
     await Promise.all(promises);
-    return [...transactionSet];
+    return pendingTransaction;
 }
 
 /**
@@ -220,7 +231,7 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
             .then(res => {
                 if (res.status == 200) {
                     try {
-                        console.log('data',res.data);
+                        
                         const block: Block[] = res.data.map((item: any) => ({
                             index: item.index,
                             timeStamp: new Date(item.timeStamp),
@@ -235,7 +246,7 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
                             }))
                         }));
 
-                        console.log('block', block);
+                        
                         
                         chains.push(block);
                     } catch (err) {
@@ -387,15 +398,16 @@ export const purchase = (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
     const { name, address, price } = req.body;
     console.log(req.body);
+    const uuid = uuidv4();
     const transaction: TransactionData = {
         previousOwner: undefined,
-        id: undefined,
+        id: uuid,
         newOwner: name,
         address: address,
         price: price,
     }
     blockChain.addTransaction(transaction);
-    res.send('Recieved');
+    res.send('Recieved Purchase', transaction);
 }
 
 
@@ -468,6 +480,8 @@ export const dump = (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
     const blocks: Block[] = blockChain.getBlockChain();
     const pendingTransaction: TransactionData[] = blockChain.getPendingTransaction();
+    const peers: PeerNode[] = blockChain.getPeers();
+    console.log('peers',peers);
     console.log('transactions', pendingTransaction);
     console.log('blocks', blocks); 
     
@@ -482,7 +496,6 @@ export const dump = (req: any, res: any) => {
 export const getAllPending = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
     const peers: PeerNode[] = blockChain.getPeers();
-    console.log('getting all pending');
     const pendingTransaction: TransactionData[] = await getPendingTransactions(peers, blockChain);
     res.json(pendingTransaction);
 
@@ -497,7 +510,6 @@ export const getAdressInfo = (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
     const address: string = req.body.address;
     const info: TransactionWithTimeStamp | null = blockChain.lookUpAdress(address);
-    console.log('returned', info);
     const response: AdressInfoResDto = {
         address: address,
         price: info? Math.floor(info.transaction.price * 1.2) : generateRandomPrice(),
