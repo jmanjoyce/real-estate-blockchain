@@ -4,6 +4,7 @@ import Vuex, { StoreOptions } from 'vuex';
 
 interface AppState {
   authToken: string | null;
+  signedIn: boolean;
  
 }
 
@@ -11,19 +12,23 @@ interface AppState {
 const store: StoreOptions<AppState> = {
   state: {
     authToken: null,
+    signedIn: false,
     
   },
   mutations: {
     setAuthToken(state, token: string) {
       state.authToken = token;
     },
+    signIn(state, isSignedIn: boolean){
+        state.signedIn = isSignedIn;
+    }
     
   },
   actions: {
     saveToken({ commit }, token: string) {
       commit('setAuthToken', token);
-      
     },
+   
     
   },
   getters: {

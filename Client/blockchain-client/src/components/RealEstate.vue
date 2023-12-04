@@ -6,7 +6,7 @@
     <div>
       <v-sheet width="300" class="mx-auto">
         <v-form ref="form">
-          <v-text-field
+          <v-text-field v-if="!userName"
             v-model="name"
             :counter="10"
             :rules="nameRules"
@@ -65,6 +65,7 @@ export default defineComponent({
   },
   props: {
     addressInfo: Object as PropType<AdressInfo | undefined>,
+    userName: Object as PropType<string | undefined>,
   },
   data(): {
     name: string;
@@ -88,8 +89,9 @@ export default defineComponent({
       this.address = adress;
     },
     submit() {
-      const purchase: Purchase = {
-        name: this.name,
+        const name : string = this.userName?? this.name;
+        const purchase: Purchase = {
+        name: name,
         address: this.address,
         price: parseInt(this.price),
       };

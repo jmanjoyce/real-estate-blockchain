@@ -407,7 +407,7 @@ export const purchase = (req: any, res: any) => {
         price: price,
     }
     blockChain.addTransaction(transaction);
-    res.send('Recieved Purchase', transaction);
+    res.send('Recieved Purchase');
 }
 
 

@@ -74,5 +74,6 @@ export interface SingInDto {
 export interface SingInResDto {
     success: boolean;
     message: string;
+    name: string;
     token?: string;
 }

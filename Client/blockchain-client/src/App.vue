@@ -1,21 +1,22 @@
 <!-- eslint-disable vue/no-unused-components -->
 <template>
-  <v-alert
-    v-show="showAlert && alert"
-    density="compact"
-    :type="alert?.type"
-    :title="alert?.title"
-    :text="alert?.text"
-    style="font-size: 18px"
-  >
-    <v-progress-linear
-      v-show="true"
-      v-model="progress"
-      :height="10"
-      color="white"
-    ></v-progress-linear>
-  </v-alert>
-  <div v-if="!signIn">
+  <div v-if="!$store.state.signedIn">
+    <v-alert
+      v-show="showAlert && alert"
+      density="compact"
+      :type="alert?.type"
+      :title="alert?.title"
+      :text="alert?.text"
+      style="font-size: 18px"
+    >
+      <v-progress-linear
+        v-show="true"
+        v-model="progress"
+        :height="10"
+        color="white"
+      ></v-progress-linear>
+    </v-alert>
+
     <SingInPage
       :create-account-page="createAccountPage"
       @change-page="changeSignInPage"
@@ -24,34 +25,67 @@
       @sign-in="signInUser"
     ></SingInPage>
   </div>
-  <div v-if="signIn">
-    <div class="top">
-      <div class="item">
-        <BlockChainManager
-          @alert="alertUser"
-          v-if="nodes"
-          @start="startNode"
-          @dump="dump"
-          :pending-transaction="pendingTransactions"
-          @get-pending="getPendingTransactions"
-          @mine="mineNewBlock"
-          :machines="nodes"
-        ></BlockChainManager>
+  <div v-if="$store.state.signedIn">
+    <v-layout>
+      <div>
+        <v-app-bar app color="blue">
+          <v-app-bar-title>Real Estate Blockchain</v-app-bar-title>
+          <template v-slot:prepend>
+            Menu
+          </template>
+
+          <template v-slot:append>
+            <div class="right-bar" v-if="currentUser">
+              <div class="sidebar-name">
+              <h3>{{ currentUser.name }}</h3>
+              </div>
+              <v-divider vertical></v-divider>
+              <v-btn size="small" @click="signOut">Sign Out</v-btn>
+            </div>
+          </template>
+         
+        </v-app-bar>
       </div>
-      <div class="item">
-        <RealEstate
-          @alert="alertUser"
-          :addressInfo="currentAdressInfo"
-          @reset-address-info="resetAddressInfo"
-          @get-address-info="getCurrentAddressInfo"
-          @purchase="purchase"
-          @invalid-address="invalidAddress"
-        ></RealEstate>
-      </div>
-      <!-- <div class="item">
+      <v-main>
+        <v-alert
+          v-show="showAlert && alert"
+          density="compact"
+          :type="alert?.type"
+          :title="alert?.title"
+          :text="alert?.text"
+          style="font-size: 15px"
+        >
+        </v-alert>
+        <div class="top">
+          <div class="item">
+            <BlockChainManager
+              @alert="alertUser"
+              v-if="nodes"
+              @start="startNode"
+              @dump="dump"
+              :pending-transaction="pendingTransactions"
+              @get-pending="getPendingTransactions"
+              @mine="mineNewBlock"
+              :machines="nodes"
+            ></BlockChainManager>
+          </div>
+          <div class="item">
+            <RealEstate
+              @alert="alertUser"
+              :user-name="currentUser?.name"
+              :addressInfo="currentAdressInfo"
+              @reset-address-info="resetAddressInfo"
+              @get-address-info="getCurrentAddressInfo"
+              @purchase="purchase"
+              @invalid-address="invalidAddress"
+            ></RealEstate>
+          </div>
+          <!-- <div class="item">
       <AddressLookup></AddressLookup>
     </div> -->
-    </div>
+        </div>
+      </v-main>
+    </v-layout>
   </div>
 </template>
 
@@ -74,6 +108,8 @@ import RealEstate from "./components/RealEstate.vue";
 const data = require("./assets/nodes.json");
 import axios from "axios";
 import SingInPage from "./components/SingInPage.vue";
+//import { useStore } from 'vuex'
+import store from "./store";
 // const dotenv = require('dotenv');
 // dotenv.config();
 
@@ -83,6 +119,10 @@ interface NodeInfo {
   location: string;
 }
 
+interface CurrentUser {
+  name: string;
+}
+
 export interface Alert {
   type: "error" | "success" | "warning" | "info" | undefined;
   title: string;
@@ -90,7 +130,7 @@ export interface Alert {
 }
 
 const parsedData: NodeInfo[] = JSON.parse(JSON.stringify(data));
-
+//const store = useStore();
 export default defineComponent({
   name: "App",
   components: {
@@ -108,10 +148,11 @@ export default defineComponent({
     pendingTransactions: TransactionData[] | undefined;
     signIn: boolean;
     createAccountPage: boolean;
+    currentUser: CurrentUser | undefined;
   } {
     return {
       createAccountPage: false,
-      signIn: false,
+      signIn: true,
       pendingTransactions: undefined,
       progress: 0,
       intervalId: null,
@@ -119,10 +160,16 @@ export default defineComponent({
       currentAdressInfo: undefined,
       showAlert: false,
       alert: undefined,
+      currentUser: undefined,
     };
+  },
+  setup() {
+    //const store = useStore();
+    //console.log(store.state.signedIn);
   },
   async mounted() {
     this.refresh();
+    console.log(store.state.signedIn);
     // Get status of all nodes,
 
     //this.nodes = nodesInfo;
@@ -192,37 +239,50 @@ export default defineComponent({
     signInUser(signInAttm: SignInAtmp) {
       const node: Node = this.nodes![0];
       const url: string = `http://${node.ipAddress}:${node.port}/signInUser`;
-      axios.post(url, signInAttm).then((res) => {
-        const signInRes: SignInResDto = res.data;
-        if (signInRes.success) {
+      axios
+        .post(url, signInAttm)
+        .then((res) => {
+          const signInRes: SignInResDto = res.data;
+          if (signInRes.success) {
+            const alert: Alert = {
+              type: "success",
+              title: "Succesfully Signed In",
+              text: "",
+            };
+            this.alertUser(alert);
+            store.commit("signIn", true);
+            const currentUser: CurrentUser = {
+              name: signInRes.name
+            }
+            this.currentUser = currentUser;
+            console.log(store.state.signedIn);
+            // This would be where we would do cool things.
+          } else {
+            const alert: Alert = {
+              type: "error",
+              title: signInRes.message,
+              text: "",
+            };
+            this.alertUser(alert);
+          }
+        })
+        .catch((err) => {
+          console.log(err);
           const alert: Alert = {
-            type: "success",
-            title: "Succesfully Signed In",
+            type: "error",
+            title: "Problem Signing in",
             text: "",
           };
           this.alertUser(alert);
-          this.signIn = true;
-          // This would be where we would do cool things.
-        } else {
-          const alert: Alert = {
-            type: "error",
-            title: signInRes.message,
-            text: "",
-          }
-          this.alertUser(alert);
-        }
-      }).catch(err => {
-        console.log(err);
-        const alert: Alert = {
-          type: "error",
-          title: "Problem Signing in",
-          text: ""
-        }
-        this.alertUser(alert);
-      });
+        });
     },
     resetAddressInfo() {
       this.currentAdressInfo = undefined;
+    },
+    signOut(){
+      store.commit("signIn", false);
+      this.currentUser = undefined;
+
     },
     invalidAddress() {
       const alert: Alert = {
@@ -249,9 +309,9 @@ export default defineComponent({
       //     // Hide alert when progress completes
       //   }
       // }, 25); // Update progress every 100 milliseconds
-      setInterval(()=> {
+      setInterval(() => {
         this.showAlert = false;
-      }, 3000)
+      }, 3000);
     },
     async refresh() {
       const nodesInfo: Node[] = [];
@@ -400,6 +460,15 @@ export default defineComponent({
   display: flex;
   flex-direction: row;
   margin-top: 40px;
+}
+
+.right-bar {
+  display: flex;
+  flex-direction: row;
+}
+
+.sidebar-name {
+  margin-right: 10px;
 }
 
 .item {

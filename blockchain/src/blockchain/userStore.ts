@@ -93,7 +93,7 @@ export const addUser = async (req: any, res: any) => {
 
         })
 
-        
+
         await newUser.save();
         dump();
         res.send('success');
@@ -116,12 +116,14 @@ export const signIn = async (req: any, res: any) => {
         if (passwordHash === attemptedHash){
             const response: SingInResDto = {
                 success: true,
+                name: user.name,
                 message: "Verification Complete"
             }
             res.json(response);
         } else {
             const response: SingInResDto = {
                 success: false,
+                name: "",
                 message: "Incorrect Password"
             }
             res.json(response);
@@ -130,6 +132,7 @@ export const signIn = async (req: any, res: any) => {
     } else {
         const reponse : SingInResDto = {
             success: false,
+            name: "",
             message: "Account Does not exist"
         }
         res.json(response);

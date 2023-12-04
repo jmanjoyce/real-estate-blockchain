@@ -68,5 +68,6 @@ export interface NewUserDto {
 export interface SignInResDto {
     success: boolean;
     message: string;
+    name: string;
     token?: string;
 }
