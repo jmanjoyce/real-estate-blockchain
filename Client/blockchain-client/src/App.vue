@@ -1,22 +1,28 @@
 <!-- eslint-disable vue/no-unused-components -->
 <template>
   <v-alert
-      v-show="showAlert && alert"
-      density="compact"
-      :type="alert?.type"
-      :title="alert?.title"
-      :text="alert?.text"
-      style="font-size: 18px"
-    >
-      <v-progress-linear
-        v-show="true"
-        v-model="progress"
-        :height="10"
-        color="white"
-      ></v-progress-linear>
-    </v-alert>
+    v-show="showAlert && alert"
+    density="compact"
+    :type="alert?.type"
+    :title="alert?.title"
+    :text="alert?.text"
+    style="font-size: 18px"
+  >
+    <v-progress-linear
+      v-show="true"
+      v-model="progress"
+      :height="10"
+      color="white"
+    ></v-progress-linear>
+  </v-alert>
   <div v-if="!signIn">
-    <SingInPage></SingInPage>
+    <SingInPage
+      :create-account-page="createAccountPage"
+      @change-page="changeSignInPage"
+      @alert="alertUser"
+      @create-new-account="createNewAccount"
+      @sign-in="signInUser"
+    ></SingInPage>
   </div>
   <div v-if="signIn">
     <div class="top">
@@ -55,11 +61,14 @@ import BlockChainManager from "./components/BlockChainManager.vue";
 import {
   AdressInfo,
   AdressInfoReqDto,
+  NewUserDto,
   Node,
   Purchase,
   Status,
   StatusDto,
   TransactionData,
+  SignInAtmp,
+  SignInResDto,
 } from "./common";
 import RealEstate from "./components/RealEstate.vue";
 const data = require("./assets/nodes.json");
@@ -74,7 +83,7 @@ interface NodeInfo {
   location: string;
 }
 
-interface Alert {
+export interface Alert {
   type: "error" | "success" | "warning" | "info" | undefined;
   title: string;
   text: string;
@@ -87,9 +96,8 @@ export default defineComponent({
   components: {
     BlockChainManager,
     RealEstate,
-    SingInPage
-},
-
+    SingInPage,
+  },
   data(): {
     nodes: Node[] | undefined;
     currentAdressInfo: AdressInfo | undefined;
@@ -98,9 +106,11 @@ export default defineComponent({
     progress: number;
     intervalId: any;
     pendingTransactions: TransactionData[] | undefined;
-    signIn: boolean,
+    signIn: boolean;
+    createAccountPage: boolean;
   } {
     return {
+      createAccountPage: false,
       signIn: false,
       pendingTransactions: undefined,
       progress: 0,
@@ -144,6 +154,73 @@ export default defineComponent({
           console.log("error getting address details from blockchain", err);
         });
     },
+    changeSignInPage(createAcctPage: boolean) {
+      this.createAccountPage = createAcctPage;
+    },
+    createNewAccount(newAccount: NewUserDto) {
+      const node: Node = this.nodes![0];
+      const url: string = `http://${node.ipAddress}:${node.port}/addUser`;
+
+      const failedCreation = () => {
+        const alert: Alert = {
+          type: "error",
+          title: "Account Creation Failed",
+          text: "Oh no something went wrong",
+        };
+        this.alertUser(alert);
+      };
+      axios
+        .post(url, newAccount)
+        .then((res) => {
+          if (res.data == "success") {
+            this.createAccountPage = false;
+            const alert: Alert = {
+              type: "success",
+              title: "Account Succesfully Created",
+              text: "You can now sign in",
+            };
+            this.alertUser(alert);
+          } else {
+            failedCreation();
+          }
+        })
+        .catch((err) => {
+          failedCreation();
+          console.log(err);
+        });
+    },
+    signInUser(signInAttm: SignInAtmp) {
+      const node: Node = this.nodes![0];
+      const url: string = `http://${node.ipAddress}:${node.port}/signInUser`;
+      axios.post(url, signInAttm).then((res) => {
+        const signInRes: SignInResDto = res.data;
+        if (signInRes.success) {
+          const alert: Alert = {
+            type: "success",
+            title: "Succesfully Signed In",
+            text: "",
+          };
+          this.alertUser(alert);
+          this.signIn = true;
+          // This would be where we would do cool things.
+        } else {
+          const alert: Alert = {
+            type: "error",
+            title: signInRes.message,
+            text: "",
+          }
+          this.alertUser(alert);
+        }
+      }).catch(err => {
+        console.log(err);
+        const alert: Alert = {
+          type: "error",
+          title: "Problem Signing in",
+          text: ""
+        }
+        this.alertUser(alert);
+      });
+    },
     resetAddressInfo() {
       this.currentAdressInfo = undefined;
     },
@@ -158,20 +235,23 @@ export default defineComponent({
     alertUser(alert: Alert) {
       this.alert = alert;
       this.showAlert = true;
-      this.progress = 100;
+      // this.progress = 100;
 
-      this.intervalId = setInterval(() => {
-        this.progress = this.progress - 1; // Decrease progress every second
-        //console.log(this.progress);
-        if (this.progress === 0) {
-          setInterval(() => {
-            this.intervalId = null;
-            this.showAlert = false;
-          }, 500);
-          this.intervalId = null;
-          // Hide alert when progress completes
-        }
-      }, 25); // Update progress every 100 milliseconds
+      // this.intervalId = setInterval(() => {
+      //   this.progress = this.progress - 1; // Decrease progress every second
+      //   //console.log(this.progress);
+      //   if (this.progress === 0) {
+      //     setInterval(() => {
+      //       this.intervalId = null;
+      //       this.showAlert = false;
+      //     }, 500);
+      //     this.intervalId = null;
+      //     // Hide alert when progress completes
+      //   }
+      // }, 25); // Update progress every 100 milliseconds
+      setInterval(()=> {
+        this.showAlert = false;
+      }, 3000)
     },
     async refresh() {
       const nodesInfo: Node[] = [];

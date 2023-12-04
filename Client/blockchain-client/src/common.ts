@@ -49,3 +49,24 @@ export interface SignInAtmp {
     username: string,
     password: string,
 }
+
+
+export enum Permission {
+    SUPERUSER = "SUPERUSER",
+    USER = "USER",
+}
+
+
+export interface NewUserDto {
+    name: string,
+    username: string,
+    password: string,
+    permission: Permission,
+    nodes?: string[],
+}
+
+export interface SignInResDto {
+    success: boolean;
+    message: string;
+    token?: string;
+}

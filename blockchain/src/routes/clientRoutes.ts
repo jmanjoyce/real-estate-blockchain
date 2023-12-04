@@ -1,7 +1,7 @@
 import express from "express";
 import { dump, getAdressInfo, getAllPending, getStatus, mineNewBlock, purchase, startBlockChain, validatePurchase } from '../blockchain/blockChainStore'
 import BlockChain from "../blockchain/blockChain";
-import { addUser } from "../blockchain/userStore";
+import { addUser, signIn } from "../blockchain/userStore";
 
 
 const router = express.Router();
@@ -60,6 +60,11 @@ router.post('/validatePurchase', validatePurchase);
  * 
  */
 router.post('/addUser', addUser);
+
+/**
+ * 
+ */
+router.post('/signInUser',signIn);
 
 // /**
 //  * 

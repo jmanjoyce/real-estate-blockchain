@@ -1,4 +1,5 @@
 <template>
+  <div class="cover">
   <div class="top">
     <div v-if="!createAccountPage" class="signin">
       <v-container>
@@ -24,11 +25,7 @@
                 type="password"
                 required
               ></v-text-field>
-              <v-btn
-                color="green"
-                @click="signIn"
-               
-                :loading="loading"
+              <v-btn color="green" @click="signIn" :loading="loading"
                 >Sign In
                 <template v-slot:loader>
                   <v-progress-linear indeterminate></v-progress-linear>
@@ -81,7 +78,8 @@
                 type="password"
                 required
               ></v-text-field>
-              <v-btn color="green" :loading="loading" @click="createAccount">Create Account
+              <v-btn color="green" :loading="loading" @click="createAccount"
+                >Create Account
                 <template v-slot:loader>
                   <v-progress-linear indeterminate></v-progress-linear>
                 </template>
@@ -89,7 +87,7 @@
               <v-btn
                 color="red"
                 variant="text"
-                @click="createAccountPage = false"
+                @click="changePage(false)"
                 >Back</v-btn
               >
             </v-form>
@@ -98,50 +96,48 @@
       </v-container>
     </div>
   </div>
+  </div>
 </template>
 
 <script lang="ts">
-import { SignInAtmp } from "@/common";
-import { defineComponent } from "vue";
+import { Alert } from "@/App.vue";
+import { NewUserDto, SignInAtmp, Permission } from "@/common";
+import { PropType, defineComponent } from "vue";
 
 export default defineComponent({
-  emits: ["sign-in", "create-new-account"],
-  watch: {
-    // loading (val) {
-    //   if (!val) return
-    //   setTimeout(() => (this.loading = false), 3000)
-    // },
-  },
+  emits: ["sign-in", "create-new-account", "alert", "change-page"],
+  
   data(): {
     username: string;
     password: string;
-    createAccountPage: boolean;
     confirmPassword: string;
     name: string;
     loading: boolean;
   } {
     return {
       loading: false,
-      createAccountPage: false,
       name: "",
       confirmPassword: "",
       password: "",
       username: "",
     };
   },
+  props: {
+    createAccountPage: {
+      type: Object as PropType<boolean>, 
+      required: true,
+    }
+    
+  },
   methods: {
     signIn() {
       // Perform signin logic here (e.g., call API, validate credentials)
       const signInAtmp: SignInAtmp = {
-        username: this.password,
-        password: this.username,
+        username: this.username,
+        password: this.password,
       };
       this.loading = true;
       this.$emit("sign-in", signInAtmp);
-     // Set loading state when sign-in starts
-
-      // Simulate asynchronous operation (e.g., API call) with setTimeout
-      // Replace this with your actual async operation (e.g., calling an API)
       setTimeout(() => {
         // Complete the operation after some delay (2 seconds in this example)
         this.loading = false; // Set loading state when sign-in completes
@@ -149,19 +145,47 @@ export default defineComponent({
 
       // Example: Use this.$router.push('/dashboard') to navigate on successful signin
     },
-    createAccount(){
+    createAccount() {
+      if (this.password !== this.confirmPassword) {
+        const alert: Alert = {
+          type: "warning",
+          title: "Password do not match",
+          text: "Passwords must match",
+        };
+        this.$emit("alert", alert);
+        this.name = "";
+        this.username = "";
+        this.password = "";
+        this.confirmPassword = "";
+        return;
+      }
       this.loading = true;
+      const account: NewUserDto = {
+        name: this.name,
+        username: this.username,
+        password: this.password,
+        permission: Permission.USER,
+      };
+      this.name ="";
+      this.username = "",
+      this.password = "",
+      this.confirmPassword = "",
+      this.$emit("create-new-account", account);
       setTimeout(() => {
         // Complete the operation after some delay (2 seconds in this example)
         this.loading = false; // Set loading state when sign-in completes
       }, 2000); // Simulating a 2-second delay
-
     },
     toCreateAccount() {
       // Handle creating a new account, e.g., navigate to signup page
-      this.createAccountPage = true;
+      //this.createAccountPage = true;
+      this.changePage(true);
       console.log("Creating a new account");
       // Example: Use this.$router.push('/signup') to navigate to the signup page
+    },
+    changePage(createAcct: boolean){
+      this.$emit("change-page", createAcct);
+
     },
   },
 });
@@ -178,12 +202,16 @@ export default defineComponent({
   padding: 10%;
 }
 
-html,
-body {
+.cover {
   background-image: url("./../assets/DSC_0065.JPG"); /* Replace with the path to your image */
   background-size: cover; /* Adjusts the size of the background image */
   background-repeat: no-repeat; /* Prevents the image from repeating */
   background-attachment: fixed;
+  position: fixed; /* Fixed positioning */
+  top: 0;
+  left: 0;
+  width: 100%; /* Full width of the viewport */
+  height: 100%; 
   /* Additional styles or properties as needed */
 }
 

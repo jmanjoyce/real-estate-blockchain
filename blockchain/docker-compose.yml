@@ -10,29 +10,29 @@ services:
     networks:
       - blockchain-network
 
-  # blockchain1:
-  #   build: .
-  #   ports:
-  #     - "3002:3000"  
-  #   environment:
-  #     - ROOT_IP=blockchain-root  
-  #     - ROOT_PORT=3000
-  #     - IP=blockchain1
-  #     - PORT=3000
-  #   networks:
-  #     - blockchain-network
+  blockchain1:
+    build: .
+    ports:
+      - "3002:3000"  
+    environment:
+      - ROOT_IP=blockchain-root  
+      - ROOT_PORT=3000
+      - IP=blockchain1
+      - PORT=3000
+    networks:
+      - blockchain-network
 
-  # blockchain2:
-  #   build: .
-  #   ports:
-  #     - "3003:3000" 
-  #   environment:
-  #     - ROOT_IP=blockchain-root  
-  #     - ROOT_PORT=3000
-  #     - IP=blockchain2
-  #     - PORT=3000
-  #   networks:
-  #     - blockchain-network
+  blockchain2:
+    build: .
+    ports:
+      - "3003:3000" 
+    environment:
+      - ROOT_IP=blockchain-root  
+      - ROOT_PORT=3000
+      - IP=blockchain2
+      - PORT=3000
+    networks:
+      - blockchain-network
   
   mongodb:
     image: mongo

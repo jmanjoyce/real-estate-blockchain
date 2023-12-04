@@ -92,6 +92,8 @@ export const addUser = async (req: any, res: any) => {
             nodes: ids,
 
         })
+
+        
         await newUser.save();
         dump();
         res.send('success');
