@@ -1,5 +1,15 @@
 <template>
   <div class="cover">
+    <v-alert
+    v-show="showAlert && alert"
+      density="compact"
+      :type="alert?.type"
+      :title="alert?.title"
+      :text="alert?.text"
+      class="top-alert"
+      style="font-size: 18px"
+    >
+    </v-alert>
   <div class="top">
     <div v-if="!createAccountPage" class="signin">
       <v-container>
@@ -126,7 +136,14 @@ export default defineComponent({
     createAccountPage: {
       type: Object as PropType<boolean>, 
       required: true,
+    },
+    alert: {
+      type: Object as PropType<Alert>,
+    },
+    showAlert: {
+      type: Object as PropType<boolean>,
     }
+    
     
   },
   methods: {

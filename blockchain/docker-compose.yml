@@ -5,8 +5,9 @@ services:
     ports:
       - "3001:3000"  # Maps host port 3001 to container port 3000 for the first instance
     environment:
-      - PORT=3000
-      - IP=blockchain-root
+      - PORT=3001
+      - IP=172.18.0.2
+      - USER_DB=mongodb:27017
     networks:
       - blockchain-network
 
@@ -33,6 +34,9 @@ services:
       - PORT=3000
     networks:
       - blockchain-network
+
+  # blockchain-remote:
+  #   build: .
   
   mongodb:
     image: mongo
@@ -40,8 +44,10 @@ services:
       - "27017:27017"  # Maps host port 27017 to container port 27017 for MongoDB
     networks:
       - blockchain-network
-      
+    volumes:
+      - /Users/jjoyce/Programming/Distributed/FinalProject/p4-final-cool-team-1/blockchain/mongod.conf
 
 networks:
   blockchain-network:
     driver: bridge
+  

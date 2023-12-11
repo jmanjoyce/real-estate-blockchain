@@ -13,7 +13,6 @@ const store: StoreOptions<AppState> = {
   state: {
     authToken: null,
     signedIn: false,
-    
   },
   mutations: {
     setAuthToken(state, token: string) {

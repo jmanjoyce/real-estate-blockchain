@@ -93,7 +93,7 @@ export default defineComponent({
         const purchase: Purchase = {
         name: name,
         address: this.address,
-        price: parseInt(this.price),
+        price: this.addressInfo?.price ?? 0,
       };
       console.log("submitting");
       this.$emit("purchase", purchase);

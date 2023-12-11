@@ -1,28 +1,14 @@
 <!-- eslint-disable vue/no-unused-components -->
 <template>
   <div v-if="!$store.state.signedIn">
-    <v-alert
-      v-show="showAlert && alert"
-      density="compact"
-      :type="alert?.type"
-      :title="alert?.title"
-      :text="alert?.text"
-      style="font-size: 18px"
-    >
-      <v-progress-linear
-        v-show="true"
-        v-model="progress"
-        :height="10"
-        color="white"
-      ></v-progress-linear>
-    </v-alert>
-
     <SingInPage
       :create-account-page="createAccountPage"
       @change-page="changeSignInPage"
       @alert="alertUser"
       @create-new-account="createNewAccount"
       @sign-in="signInUser"
+      :alert="alert"
+      :show-alert="showAlert"
     ></SingInPage>
   </div>
   <div v-if="$store.state.signedIn">
@@ -258,10 +244,11 @@ export default defineComponent({
             console.log(store.state.signedIn);
             // This would be where we would do cool things.
           } else {
+            console.log('alerting', signInRes.message);
             const alert: Alert = {
               type: "error",
-              title: signInRes.message,
-              text: "",
+              title: "Incorrect Password",
+              text: "try again",
             };
             this.alertUser(alert);
           }
@@ -454,6 +441,15 @@ export default defineComponent({
   text-align: center;
   color: #2c3e50;
   /* //margin-top: 60px; */
+}
+
+.top-alert {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%; /* Adjust width as needed */
+  z-index: 1000; /* Ensure a higher z-index to make it appear above other elements */
 }
 
 .top {

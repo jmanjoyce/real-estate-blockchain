@@ -9,7 +9,7 @@ import { confirmMining,
     recieveNewBroadCast,
     replicateTransaction,
     resolveConflicts,
-    startBlockChain} from '../blockchain/blockChainStore'
+    startBlockChain} from '../blockchain/blockChainService'
 import BlockChain from "../blockchain/blockChain";
 
 

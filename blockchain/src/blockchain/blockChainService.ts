@@ -1,8 +1,8 @@
 
-import { AdressInfoResDto, Block, PeerNode, StatusDto, TransactionData, ValidPurchaseDto } from '../common';
-import BlockChain, { TransactionWithTimeStamp } from './blockChain';
+import { AdressInfoResDto, Block, PeerNode, Status, StatusDto, TransactionData, TransactionWithTimeStamp, ValidPurchaseDto } from '../common';
+import BlockChain from './blockChain';
 import axios from 'axios';
-import { Status } from './blockChain';
+//import { Status } from './blockChain';
 import { generateRandomPrice } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -48,7 +48,7 @@ export const getPendingTransactions = async (peerNodes: PeerNode[], self: BlockC
 
     // If we want to add transactions of included peer
     if (self){
-        const localPendingTransactions: TransactionData[] = self.getPendingTransaction();
+        const localPendingTransactions: TransactionData[] = await self.getPendingTransaction();
         localPendingTransactions.forEach(transaction => {
             if (!idSet.has(transaction.id)){
                 idSet.add(transaction.id);
@@ -154,9 +154,9 @@ export const sendChain = (block: BlockChain) => {
  * Sends out all the current pending transaction we have
  * 
  */
-export const getCurrentPendingTransaction = (req: any, res: any) => {
+export const getCurrentPendingTransaction = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
-    const pendingTransaction: TransactionData[] = blockChain.getPendingTransaction();
+    const pendingTransaction: TransactionData[] = await blockChain.getPendingTransaction();
     res.json(pendingTransaction);
 
 }
@@ -405,6 +405,7 @@ export const purchase = (req: any, res: any) => {
         newOwner: name,
         address: address,
         price: price,
+        pending: true,
     }
     blockChain.addTransaction(transaction);
     res.send('Recieved Purchase');
@@ -476,11 +477,11 @@ export const getStatus = (req: any, res: any) => {
  * @param req 
  * @param res 
  */
-export const dump = (req: any, res: any) => {
+export const dump = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
-    const blocks: Block[] = blockChain.getBlockChain();
-    const pendingTransaction: TransactionData[] = blockChain.getPendingTransaction();
-    const peers: PeerNode[] = blockChain.getPeers();
+    const blocks: Block[] = await  blockChain.getBlockChain();
+    const pendingTransaction: TransactionData[] = await blockChain.getPendingTransaction();
+    const peers: PeerNode[] = await blockChain.getPeers();
     console.log('peers',peers);
     console.log('transactions', pendingTransaction);
     console.log('blocks', blocks); 
@@ -495,7 +496,7 @@ export const dump = (req: any, res: any) => {
  */
 export const getAllPending = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
-    const peers: PeerNode[] = blockChain.getPeers();
+    const peers: PeerNode[] =  await blockChain.getPeers();
     const pendingTransaction: TransactionData[] = await getPendingTransactions(peers, blockChain);
     res.json(pendingTransaction);
 
@@ -506,10 +507,10 @@ export const getAllPending = async (req: any, res: any) => {
  * @param req 
  * @param res 
  */
-export const getAdressInfo = (req: any, res: any) => {
+export const getAdressInfo = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app');
     const address: string = req.body.address;
-    const info: TransactionWithTimeStamp | null = blockChain.lookUpAdress(address);
+    const info: TransactionWithTimeStamp | null = await blockChain.lookUpAdress(address);
     const response: AdressInfoResDto = {
         address: address,
         price: info? Math.floor(info.transaction.price * 1.2) : generateRandomPrice(),
