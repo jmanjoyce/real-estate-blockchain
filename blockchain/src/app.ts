@@ -37,8 +37,10 @@ var userStore: UserStore = new UserStore();
 // This is not a super programmatic way to start this, some weird things were going on so I 
 // did it for debugging/
 // initialBroadCast(blockChain); // Could be a starting method inside a route
-module.exports = blockChain;
-module.exports = userStore;
+module.exports = {
+  blockChain: blockChain,
+  userStore: userStore
+};
 
 
 app.use('/', clientRoutes);

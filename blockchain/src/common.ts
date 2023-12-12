@@ -1,5 +1,3 @@
-//import { Status } from "./blockchain/blockChain";
-//import { signIn } from "./blockchain/userStore";
 
 
 export interface Block {

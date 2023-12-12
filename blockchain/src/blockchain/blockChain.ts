@@ -1,40 +1,18 @@
 import { Block, PeerNode, TransactionData, TransactionWithTimeStamp } from '../common';
 import { createHash, randomBytes } from 'crypto';
 import { pickRandomElements } from './utils';
-import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine, synchronizeChains, getPendingTransactions } from './blockChainService';
+import { replicateTransaction, replicateNewTransaction, initialBroadCast, getPeerChains, succesfulMine, synchronizeChains, getPendingTransactions, removePendingTransactionFromPeers } from './blockChainService';
 import mongoose from 'mongoose';
 import { Status } from '../common';
 const os = require('os');
 
 
 
-// const transactionSchema = new mongoose.Schema<TransactionData>({
-//     id: { type: String, required: true },
-//     previousOwner: { type: String, required: false },
-//     newOwner: { type: String, required: true },
-//     address: { type: String, required: true},
-//     price: { type: Number, required: true},
-// })
-
-//const TransactionModel: mongoose.Model<TransactionData> = mongoose.model<TransactionData>('TransactionData', transactionSchema);
-
-// const blockSchema = new mongoose.Schema<Block>({
-//     index: {type: Number, required: true},
-//     timeStamp: {type: Date, required: true},
-//     information: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TransactionData' }],
-//     previousHash:{type: String, required: true},
-//     nonce: {type : String, required: true},
-// });
-
-//const BlockModel: mongoose.Model<Block> = mongoose.model<Block>('Block', blockSchema);
-
 
 
 class BlockChain {
 
-    blockChain: Block[];
-    pendingTransactionData: TransactionData[];
-    peers: PeerNode[];
+
     node: PeerNode;
     rootNode: PeerNode | undefined;
     status: Status;
@@ -44,8 +22,8 @@ class BlockChain {
 
     constructor(peers: PeerNode[]) {
 
-        const connectionUrl = `mongodb://${process.env.BLOCK_DB}/app`;
-        const conn: mongoose.Connection = mongoose.createConnection(connectionUrl, {  });
+        const connectionUrl = `mongodb://${process.env.BLOCK_DB}`;
+        const conn: mongoose.Connection = mongoose.createConnection(connectionUrl, {});
         conn.on('error', console.error.bind(console, 'MongoDB connection error:'));
         conn.once('open', () => {
             console.log('Connected to MongoDB');
@@ -62,7 +40,8 @@ class BlockChain {
             newOwner: { type: String, required: true },
             address: { type: String, required: true },
             price: { type: Number, required: true },
-            pending: { type: Boolean, required: true }
+            pending: { type: Boolean, required: true },
+            date: { type: Date, required: true }
         })
 
         const blockSchema = new mongoose.Schema<Block>({
@@ -78,9 +57,7 @@ class BlockChain {
         this.BlockModel = conn.model<Block>('Block', blockSchema);
         this.TransactionModel = conn.model<TransactionData>('TransactionData', transactionSchema);
 
-        this.blockChain = [];
-        this.pendingTransactionData = [];
-        this.peers = peers ?? [];
+
         this.node = {
             ipAddress: process.env.IP ?? 'localhost',
             port: process.env.PORT ?? '3000',
@@ -114,8 +91,7 @@ class BlockChain {
     async lookUpAdress(address: string): Promise<TransactionWithTimeStamp | null> {
         const res: TransactionWithTimeStamp[] = [];
 
-        // TODO this can be definitely be written more concisely, it's hacky.
-        // Method is returning with the first match it finds. needs to be written better
+
         try {
             // Find the most recent block that contains transactions with the given address
             const block = await this.BlockModel.findOne({ information: { $elemMatch: { address } } })
@@ -149,73 +125,86 @@ class BlockChain {
         } catch (error) {
             console.error('Error finding transactions:', error);
             throw error;
-            return null;
-        }
 
-        // this.blockChain.reverse().some((block: Block) => {
-        //     const timeStamp = block.timeStamp;
-        //     block.information.some(transaction => {
-        //         console.log('transaction addr', transaction.address);
-        //         if (transaction.address == address){
-        //             const match: TransactionWithTimeStamp = { 
-        //                 timeStamp: timeStamp,
-        //                 transaction: transaction
-        //            }
-        //            res.push(match);
-        //            return true;
-        //         }
-        //         return false;
-        //     })
-        //     if (res.length > 0 ){
-        //         return true;
-        //     }
-        //     return false;
-        // });
-        // return res.length > 0? res[0]: null;
+        }
     }
 
     setStatus(status: Status) {
         this.status = status;
     }
 
-    // initialBroadCast() {
-    //     if (process.env.ROOT_IP !== undefined &&
-    //         process.env.ROOT_PORT !== undefined) {
-    //         initialBroadCast(this.node, this.rootNode!);
-    //     }
+    removePending(transactions: TransactionData[]): Promise<string>{
+        return new Promise<string>(async (resolve,reject)=> {
+            try {
+                const promises = transactions.map(transaction => {
+                    const query= {
+                        id: transaction.id,
+                        pending: true,
+                        
+                    }
+                    return this.TransactionModel.deleteMany(query);
+                })
+                await Promise.all(promises);
+                resolve('Success')
+            } catch (err) {
+                reject();
 
-
-    // }
-
-    async addTransaction(data: TransactionData) {
-        console.log('adding transaction');
-        this.pendingTransactionData.push(data);
-        const pendingTransactionDoc = new this.TransactionModel({
-            id: data.id,
-            previousOwner: data.previousOwner,
-            newOwner: data.newOwner,
-            address: data.address,
-            price: data.price,
-            pending: true,
-        })
-        pendingTransactionDoc.save();
-        const peersDoc = await this.PeerNodeModel.find({});
-        const peerNodes = peersDoc.map(peer => peer.toObject());
-        if (peerNodes.length > 0) {
-            // Could use some 
-            const maxReplication = 1; // This could be enviorment variable
-
-            const numReplication = Math.min(peerNodes.length, maxReplication);
-            const peerForReplication: PeerNode[] | undefined = pickRandomElements(peerNodes, numReplication);
-            if (peerForReplication) {
-                replicateNewTransaction([data], peerForReplication);
             }
+
+
+        })
+        
+        
+    }
+
+
+
+
+    async addTransaction(data: TransactionData): Promise<string> {
+        console.log('adding transaction');
+        // this.pendingTransactionData.push(data);
+        try {
+            const existing = await this.TransactionModel.find({
+                address: data.address,
+                pending: true,
+            })
+            if (existing) {
+                return "Address already processing";
+            }
+            // Pre processing to prevent address here
+            const pendingTransactionDoc = new this.TransactionModel({
+                id: data.id,
+                previousOwner: data.previousOwner,
+                newOwner: data.newOwner,
+                address: data.address,
+                price: data.price,
+                pending: true,
+                date: data.date,
+            })
+            pendingTransactionDoc.save();
+            const peersDoc = await this.PeerNodeModel.find({});
+            const peerNodes: PeerNode[] = peersDoc;
+            if (peerNodes.length > 0) {
+                // Could use some 
+                const maxReplication = 1; // This could be enviorment variable
+
+                const numReplication = Math.min(peerNodes.length, maxReplication);
+                const peerForReplication: PeerNode[] | undefined = pickRandomElements(peerNodes, numReplication);
+                if (peerForReplication) {
+                    replicateNewTransaction([data], peerForReplication);
+                }
+            }
+            return "success";
+        } catch (err) {
+            console.error(err);
+            return "Error saving transaction"
+
         }
 
     }
 
     addPeer(newPeer: PeerNode) {
-        this.peers.push(newPeer);
+        // this.peers.push(newPeer);
         const peerDoc = new this.PeerNodeModel({
             ipAddress: newPeer.ipAddress,
             port: newPeer.port
@@ -298,12 +287,12 @@ class BlockChain {
 
         return new Promise<void>(async (resolve, reject) => {
             try {
-                const peerChains: Block[][] = await getPeerChains(this.peers);
+                const peers: PeerNode[] = await this.PeerNodeModel.find({});
+                const peerChains: Block[][] = await getPeerChains(peers);
 
                 //console.log('peer chains', peerChains);
                 let max = await this.BlockModel.countDocuments({});
-                //let newChain: Block[] | undefined = undefined;
-                //let i
+
                 let maxI = -1;
                 peerChains.forEach((chain: Block[], i) => {
                     if (chain.length > max && this.validateBlock(chain)) {
@@ -314,19 +303,7 @@ class BlockChain {
                 const newChain: Block[] = peerChains[maxI];
 
                 if (newChain) {
-                    //this.blockChain = newChain;
-                    // newChain.forEach((block: Block) => {
-                    //     //const i: number = chain.index;
-                    //     const query = {
-                    //         index: block.index
-                    //     }
-                    //     this.BlockModel.findOneAndUpdate({
-                    //         query,
-                    //         block,
-                    //         { upsert: true}
-                    //     })
 
-                    // })
                     const promises = newChain.map((block: Block) => {
                         const query = {
                             index: block.index
@@ -350,7 +327,8 @@ class BlockChain {
     async updateTransactionDataFromPeers(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
-                const newTransactionData: TransactionData[] = await getPendingTransactions(this.peers);
+                const peers: PeerNode[] = await this.PeerNodeModel.find({});
+                const newTransactionData: TransactionData[] = await getPendingTransactions(peers);
                 this.updatePendingTransactions(newTransactionData);
                 resolve();
             } catch (err) {
@@ -361,10 +339,7 @@ class BlockChain {
     }
 
     async containsTransactionAddress(address: string): Promise<boolean> {
-        // const transactionAddressSet: Set<string> = new Set(this.pendingTransactionData.map(transaction => {
-        //     return transaction.address;
-        // }));
-        // return transactionAddressSet.has(address);
+
         const query = {
             address: address,
             pending: true,
@@ -375,12 +350,65 @@ class BlockChain {
 
     }
 
+    async checkAndRemoveDuplicateAddress(): Promise<void> {
+        
+        // Aggregation pipeline to find and delete duplicates with later timestamps
+        return new Promise<void>(async (resolve,reject)=>{
+            this.TransactionModel.aggregate([
+                {
+                    $group: {
+                        _id: '$address',
+                        count: { $sum: 1 },
+                        earliestTimestamp: { $min: '$timestamp' },
+                        docs: { $push: '$$ROOT' }
+                    }
+                },
+                {
+                    $project: {
+                        documents: {
+                            $filter: {
+                                input: '$docs',
+                                as: 'doc',
+                                cond: { $ne: ['$$doc.timestamp', '$earliestTimestamp'] }
+                            }
+                        }
+                    }
+                },
+                {
+                    $unwind: '$documents'
+                }
+            ])
+                .then(async results => {
+                    const idsToDelete = results.map(item => item.documents._id);
+                    try {
+                        const dupQuery = { _id: { $in: idsToDelete } };
+                        const transactions: TransactionData[] = await this.TransactionModel.find(dupQuery);
+                        await this.TransactionModel.deleteMany(dupQuery);
+                        const peers:PeerNode[] = await this.PeerNodeModel.find({});
+                        removePendingTransactionFromPeers(peers, transactions);
+                        resolve();
+
+
+                    } catch (err){
+                        console.error('problem doing getting items to delete',err );
+                        reject();
+
+                    }
+                    
+                })
+                .catch(err => {
+                    console.error('Error processing aggregation:', err);
+                    reject();
+                });
+        })
+        
+    }
+
     async newBlock() {
         // Get transaction data from neighbors; (maybe) so we don't have to synchronize block
         console.log('starting mining');
         console.log('getting new transactions from peers');
-        // const newTransactionData: TransactionData[] = await getPendingTransactions(this.peers);
-        // this.updatePendingTransactions(newTransactionData);
+
         await this.updateTransactionDataFromPeers();
         await this.resolveConflicts();
 
@@ -398,6 +426,8 @@ class BlockChain {
         const newIndex: number = prevBlock ? prevBlock.index + 1 : 0;
         const newNonce: string = prevBlock ? this.mine(prevBlock) : BlockChain.nonce();
         const previousHash: string = prevBlock ? BlockChain.hash(prevBlock) : "0000";
+
+        await this.checkAndRemoveDuplicateAddress();
 
 
         const pendingTransactionsDoc = await this.TransactionModel.find({ pending: true });
@@ -430,8 +460,7 @@ class BlockChain {
 
         // Reset our current pending transactions 
         // calls update pending transactions to prevent concurrency issues
-        //this.updatePendingTransactions(newBlock.information);
-        //this.blockChain.push(newBlock);
+
 
         // Alert peers the pending transactions have been done.
         const peers: PeerNode[] = await this.PeerNodeModel.find({});
@@ -439,7 +468,7 @@ class BlockChain {
 
         // Ask one peer to sychronize with us for replication purposes
         const numSynchronization = 1;
-        const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(this.peers, numSynchronization);
+        const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(peers, numSynchronization);
         if (peersForSynchronization) {
             synchronizeChains(peersForSynchronization);
         }
@@ -447,8 +476,8 @@ class BlockChain {
     }
 
     async replicateTransaction(data: TransactionData[]): Promise<void> {
-        
-        return new Promise<void>(async (resolve, reject)=> {
+
+        return new Promise<void>(async (resolve, reject) => {
             try {
                 const promises = data.map((transaction: TransactionData) => {
                     const query = {
@@ -470,7 +499,7 @@ class BlockChain {
             }
 
         })
-       
+
     }
 
     static hash(block: Block, nonce?: string) {

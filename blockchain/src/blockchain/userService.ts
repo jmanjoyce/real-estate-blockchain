@@ -2,7 +2,7 @@ import { NewUserDto, SingInDto } from "../common";
 import UserStore from "./userStore";
 
 export const addUser = async (req: any, res: any) => {
-    var userStore: UserStore = require('../app');
+    var userStore: UserStore = require('../app').userStore;
     const user: NewUserDto = req.body;
     userStore.addUser(user).then(()=>{
         res.send('success');
@@ -13,10 +13,11 @@ export const addUser = async (req: any, res: any) => {
 }
 
 export const signIn = async (req: any, res: any) => {
-    var userStore: UserStore = require('../app');
+    var userStore: UserStore = require('../app').userStore;
     const signIn: SingInDto = req.body;
     const response = await userStore.signIn(signIn);
-    res.json(res);
+    //console.log(response);
+    res.json(response);
 
 }
 
