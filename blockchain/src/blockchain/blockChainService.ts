@@ -517,6 +517,7 @@ export const dump = async (req: any, res: any) => {
     console.log('peers',peers);
     console.log('transactions', pendingTransaction);
     console.log('blocks', blocks); 
+    res.send('succesfully');
     
 
 }

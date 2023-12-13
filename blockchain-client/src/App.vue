@@ -1,4 +1,4 @@
-<!-- eslint-disable vue/no-unused-components -->
+
 <template>
   <div v-if="!$store.state.signedIn">
     <SingInPage
