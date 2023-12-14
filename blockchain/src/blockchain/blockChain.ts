@@ -466,7 +466,7 @@ class BlockChain {
         succesfulMine(peers, pendingTransactions);
 
         // Ask one peer to sychronize with us for replication purposes
-        const numSynchronization = 1;
+        const numSynchronization = Math.min(peers.length, parseInt(`${process.env.NUM_REPLICAS}`));
         const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(peers, numSynchronization);
         if (peersForSynchronization) {
             synchronizeChains(peersForSynchronization);
