@@ -15,6 +15,7 @@ export interface TransactionData {
     address: string,
     price: number,
     pending: boolean,
+    date: Date,
 }
 
 export interface PeerNode {

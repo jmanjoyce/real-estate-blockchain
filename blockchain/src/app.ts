@@ -3,9 +3,13 @@ import clientRoutes from './routes/clientRoutes';
 import BlockChain from './blockchain/blockChain'
 import cors from 'cors';
 import serverRoutes from './routes/blockChainRoutes';
+import metricRoutes from './routes/metricRoutes';
 import { initialBroadCast } from './blockchain/blockChainService';
 import mongoose from 'mongoose';
 import UserStore from './blockchain/userStore';
+import MetricStore from './blockchain/metrics/metricStore';
+import { metricMiddlewate } from './blockchain/metrics/metricService';
+
 
 const app = express();
 
@@ -33,15 +37,18 @@ app.listen(3000, () => {
 
 var blockChain: BlockChain = new BlockChain([]);
 var userStore: UserStore = new UserStore();
+var metricStore: MetricStore = new MetricStore();
 
 // This is not a super programmatic way to start this, some weird things were going on so I 
 // did it for debugging/
 // initialBroadCast(blockChain); // Could be a starting method inside a route
 module.exports = {
   blockChain: blockChain,
-  userStore: userStore
+  userStore: userStore,
+  metricStore: metricStore,
 };
 
-
+app.use('/block', metricMiddlewate);
+app.use('/metric',metricRoutes );
 app.use('/', clientRoutes);
 app.use('/block', serverRoutes);
