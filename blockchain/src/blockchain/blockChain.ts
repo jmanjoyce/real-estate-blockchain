@@ -186,9 +186,8 @@ class BlockChain {
             const peerNodes: PeerNode[] = peersDoc;
             if (peerNodes.length > 0) {
                 // Could use some 
-                const maxReplication = 1; // This could be enviorment variable
-
-                const numReplication = Math.min(peerNodes.length, maxReplication);
+                const maxReplication = `${process.env.NUM_REPLICAS}` ?? 1; // This could be enviorment variable
+                const numReplication = Math.min(peerNodes.length, parseInt(maxReplication));
                 const peerForReplication: PeerNode[] | undefined = pickRandomElements(peerNodes, numReplication);
                 if (peerForReplication) {
                     replicateNewTransaction([data], peerForReplication);
