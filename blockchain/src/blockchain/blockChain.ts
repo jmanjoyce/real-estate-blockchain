@@ -54,7 +54,7 @@ class BlockChain {
         conn.once('open', () => {
             console.log('Connected to MongoDB');
             
-            this.TransactionModel.deleteMany({}).then(()=>{
+            this.PeerNodeModel.deleteMany({}).then(()=>{
                 console.log('Collection cleared');
             }).catch(()=>{
                 console.error('Error clearing collection:');

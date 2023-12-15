@@ -8,12 +8,8 @@ services:
       - PORT=3000
       - IP=blockchain-root
       - USER_DB=mongodb:27017
-<<<<<<< HEAD
-      - BLOCK_DB=mongodb:27017/root_test
-=======
       - BLOCK_DB=mongodb:27017/root
       - NUM_REPLICAS=1
->>>>>>> 1c7c45f051aa845f0351d85b25c4662ce595403c
     networks:
       - blockchain-network
 
