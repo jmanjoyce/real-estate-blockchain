@@ -340,8 +340,10 @@ export default defineComponent({
     },
     async purchase(purchase: Purchase) {
       console.log("purchasing", purchase);
+      const node: Node = this.nodes![0]
+      const url = `http://${node.ipAddress}:${node.port}/purchase`;
       await axios
-        .post("http://localhost:3001/purchase", purchase)
+        .post(url, purchase)
         .then((res) => {
           console.log(res);
           const alert: Alert = {
