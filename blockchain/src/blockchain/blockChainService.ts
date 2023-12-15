@@ -5,6 +5,7 @@ import axios from 'axios';
 //import { Status } from './blockChain';
 import { generateRandomPrice } from './utils';
 import { v4 as uuidv4 } from 'uuid';
+import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
 
 
 
@@ -58,6 +59,7 @@ export const getPendingTransactions = async (peerNodes: PeerNode[], self: BlockC
         })
     }
     const promises = peerNodes.map((node) => {
+        console.log('node');
         const url = `http://${node.ipAddress}:${node.port}/block/pendingTransactions`;
         return axios.get(url)
             .then(res => {
@@ -101,7 +103,9 @@ export const replicateNewTransaction = async (data: TransactionData[], peers: Pe
 
         const url = `http://${node.ipAddress}:${node.port}/block/replicateTransaction`;
         console.log('replicating new transaction ', url)
-        axios.post(url, data).then().catch(err => {
+        axios.post(url, data).then(()=>{
+            console.log('sent replicated');
+        }).catch(err => {
             console.log(err);
         })
     })
@@ -115,9 +119,11 @@ export const replicateNewTransaction = async (data: TransactionData[], peers: Pe
  */
 export const removePendingTransactionFromPeers = (peers: PeerNode[], transactions: TransactionData[]) => {
     peers.forEach(node => {
+        
         const url = `http://${node.ipAddress}:${node.port}/block/removePending`;
+        console.log('url',url);
         axios.post(url, transactions).then().catch(err => {
-            console.error('problem sending data to peer', err);
+            console.error('problem sending data to peer', err.code);
         })
     })
 
@@ -132,6 +138,7 @@ export const removePendingTransactionFromPeers = (peers: PeerNode[], transaction
 export const removePending = async (req: any, res: any) => {
     var blockchain: BlockChain = require('../app').blockChain;
     const transactionToRemove: TransactionData[] = req.body;
+    console.log('removing', transactionToRemove);
     const result: string = await blockchain.removePending(transactionToRemove);
     res.send(result);
 
@@ -257,6 +264,7 @@ export const succesfulMine = async (peers: PeerNode[], minedTransactions: Transa
 export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> => {
     const chains: Block[][] = [];
     const promises = peerNodes.map((node) => {
+        console.log('sending', node);
         const url = `http://${node.ipAddress}:${node.port}/block/currentBlock`;
         return axios.get(url)
             .then(res => {
@@ -329,10 +337,10 @@ export const confirmMining = (req: any, res: any) => {
  * @param req 
  * @param res 
  */
-export const recieveNewBroadCast = (req: any, res: any) => {
-    var blockChain = require('../app').blockChain;
+export const recieveNewBroadCast =async  (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app').blockChain;
     //console.log('recieving new broadcast');
-    const knownPeers: PeerNode[] = blockChain.getPeers();
+    const knownPeers: PeerNode[] = await blockChain.getPeers();
     res.json(knownPeers);
     const body = req.body;
     const newNode: PeerNode = {
@@ -371,6 +379,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
         const fetchedNewPeers = await axios.post(url, nodeInfo)
             .then(res => {
                 if (res.status == 200) {
+                    console.log('data', res.data);
                     const newPeers: PeerNode[] = res.data.map((item: any) => ({
                         port: item.port,
                         ipAddress: item.ipAddress,
@@ -400,7 +409,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
         }
 
     } catch (error) {
-        console.error("Error occurred while fetching new peers: ", error);
+        console.error("Error occurred while fetching new peers: ");
 
     }
 
@@ -411,9 +420,9 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
  * @param req 
  * @param res 
  */
-export const getChain = (req: any, res: any) => {
+export const getChain = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app').blockChain;
-    const chain = blockChain.getBlockChain();
+    const chain = await blockChain.getBlockChain();
     res.json(chain);
 
 }
@@ -425,7 +434,7 @@ export const getChain = (req: any, res: any) => {
  * @param req 
  * @param res 
  */
-export const purchase = (req: any, res: any) => {
+export const purchase =async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app').blockChain;
     const { name, address, price } = req.body;
     console.log(req.body);
@@ -439,8 +448,8 @@ export const purchase = (req: any, res: any) => {
         pending: true,
         date: new Date(),
     }
-    blockChain.addTransaction(transaction);
-    res.send('Recieved Purchase');
+    const ress = await blockChain.addTransaction(transaction);
+    res.send(ress);
 }
 
 
@@ -452,7 +461,7 @@ export const purchase = (req: any, res: any) => {
 export const addTransaction = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app').blockChain;
     const data: TransactionData = JSON.parse(JSON.stringify(req.body));
-    const result = blockChain.addTransaction(data);
+    const result = await blockChain.addTransaction(data);
     res.send(result);
 
 }
@@ -564,7 +573,7 @@ export const validatePurchase = async (req: any, res: any) => {
     var blockChain: BlockChain = require('../app').blockChain;
     const address: string = req.body.address;
     await blockChain.updateTransactionDataFromPeers();
-    const result: boolean = !blockChain.containsTransactionAddress(address);
+    const result: boolean = ! (await blockChain.containsTransactionAddress(address));
     const valid : ValidPurchaseDto = {
         valid: result,
     }

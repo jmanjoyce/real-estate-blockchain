@@ -6,10 +6,6 @@ import mongoose from 'mongoose';
 import { Status } from '../common';
 const os = require('os');
 
-
-
-
-
 class BlockChain {
 
 
@@ -24,10 +20,7 @@ class BlockChain {
 
         const connectionUrl = `mongodb://${process.env.BLOCK_DB}`;
         const conn: mongoose.Connection = mongoose.createConnection(connectionUrl, {});
-        conn.on('error', console.error.bind(console, 'MongoDB connection error:'));
-        conn.once('open', () => {
-            console.log('Connected to MongoDB');
-        });
+        
 
         const peerNodeSchema = new mongoose.Schema<PeerNode>({
             ipAddress: { type: String, required: true },
@@ -57,6 +50,19 @@ class BlockChain {
         this.BlockModel = conn.model<Block>('Block', blockSchema);
         this.TransactionModel = conn.model<TransactionData>('TransactionData', transactionSchema);
 
+        conn.on('error', console.error.bind(console, 'Block MongoDB connection error:'));
+        conn.once('open', () => {
+            console.log('Connected to MongoDB');
+            
+            this.TransactionModel.deleteMany({}).then(()=>{
+                console.log('Collection cleared');
+            }).catch(()=>{
+                console.error('Error clearing collection:');
+            })
+
+                
+            
+        });
 
         this.node = {
             ipAddress: process.env.IP ?? 'localhost',
@@ -65,7 +71,7 @@ class BlockChain {
 
         if (process.env.ROOT_IP !== undefined &&
             process.env.ROOT_PORT !== undefined) {
-
+           
             this.rootNode = {
                 ipAddress: process.env.ROOT_IP,
                 port: process.env.ROOT_PORT,
@@ -136,6 +142,7 @@ class BlockChain {
     removePending(transactions: TransactionData[]): Promise<string>{
         return new Promise<string>(async (resolve,reject)=> {
             try {
+                
                 const promises = transactions.map(transaction => {
                     const query= {
                         id: transaction.id,
@@ -168,9 +175,10 @@ class BlockChain {
                 address: data.address,
                 pending: true,
             })
-            if (existing) {
+            if (existing.length > 0) {
                 return "Address already processing";
             }
+            console.log('saving address');
             // Pre processing to prevent address here
             const pendingTransactionDoc = new this.TransactionModel({
                 id: data.id,
@@ -181,13 +189,14 @@ class BlockChain {
                 pending: true,
                 date: data.date,
             })
-            pendingTransactionDoc.save();
+            await pendingTransactionDoc.save();
             const peersDoc = await this.PeerNodeModel.find({});
             const peerNodes: PeerNode[] = peersDoc;
             if (peerNodes.length > 0) {
                 // Could use some 
-                const maxReplication = `${process.env.NUM_REPLICAS}` ?? 1; // This could be enviorment variable
-                const numReplication = Math.min(peerNodes.length, parseInt(maxReplication));
+                const maxReplication = 1; // This could be enviorment variable
+
+                const numReplication = Math.min(peerNodes.length, maxReplication);
                 const peerForReplication: PeerNode[] | undefined = pickRandomElements(peerNodes, numReplication);
                 if (peerForReplication) {
                     replicateNewTransaction([data], peerForReplication);
@@ -218,10 +227,13 @@ class BlockChain {
     }
 
     async getPendingTransaction(): Promise<TransactionData[]> {
-        const pendingRes = await this.TransactionModel.find({
+        const pendingTran = await this.TransactionModel.find({});
+        console.log("all pending info", pendingTran);
+        const pendingRes: TransactionData[] = await this.TransactionModel.find({
             pending: true,
         })
-        return pendingRes.map(tran => tran.toObject());
+        console.log("mathced",pendingRes);
+        return pendingRes;
     }
 
     async updatePendingTransactions(processedTransactions: TransactionData[]) {
@@ -355,6 +367,11 @@ class BlockChain {
         return new Promise<void>(async (resolve,reject)=>{
             this.TransactionModel.aggregate([
                 {
+                    $match: {
+                        pending: { $ne: false } 
+                    }
+                },
+                {
                     $group: {
                         _id: '$address',
                         count: { $sum: 1 },
@@ -384,6 +401,7 @@ class BlockChain {
                         const transactions: TransactionData[] = await this.TransactionModel.find(dupQuery);
                         await this.TransactionModel.deleteMany(dupQuery);
                         const peers:PeerNode[] = await this.PeerNodeModel.find({});
+                        console.log('transactions to be removed', transactions);
                         removePendingTransactionFromPeers(peers, transactions);
                         resolve();
 
@@ -412,7 +430,7 @@ class BlockChain {
         await this.resolveConflicts();
 
 
-        const prevBlockG = async (): Promise<Block | undefined> => {
+        const getPrevBlock = async (): Promise<Block | undefined> => {
             const size = await this.BlockModel.countDocuments();
             if (size > 0) {
                 const blockWithMaxIndex = await this.BlockModel.findOne().sort({ index: -1 });
@@ -421,7 +439,7 @@ class BlockChain {
             return undefined;
 
         }
-        const prevBlock: Block | undefined = await prevBlockG();
+        const prevBlock: Block | undefined = await getPrevBlock();
         const newIndex: number = prevBlock ? prevBlock.index + 1 : 0;
         const newNonce: string = prevBlock ? this.mine(prevBlock) : BlockChain.nonce();
         const previousHash: string = prevBlock ? BlockChain.hash(prevBlock) : "0000";
@@ -466,7 +484,7 @@ class BlockChain {
         succesfulMine(peers, pendingTransactions);
 
         // Ask one peer to sychronize with us for replication purposes
-        const numSynchronization = Math.min(peers.length, parseInt(`${process.env.NUM_REPLICAS}`));
+        const numSynchronization = 1;
         const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(peers, numSynchronization);
         if (peersForSynchronization) {
             synchronizeChains(peersForSynchronization);

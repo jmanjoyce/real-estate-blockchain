@@ -7,6 +7,7 @@ import { confirmMining,
     purchase,
     recieveBroadCast,
     recieveNewBroadCast,
+    removePending,
     replicateTransaction,
     resolveConflicts,
     startBlockChain} from '../blockchain/blockChainService'
@@ -55,6 +56,11 @@ router.post('/newBroadCast', recieveNewBroadCast);
  * 
  */
 router.post('/broadCast', recieveBroadCast);
+
+/**
+ * 
+ */
+router.post('/removePending', removePending);
 
 
 

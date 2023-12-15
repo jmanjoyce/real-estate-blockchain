@@ -1,7 +1,7 @@
 import MetricStore, { NetworkEvent } from "./metricStore";
 
 export const metricMiddlewate = (req: any, res: any, next: any) => {
-    var metricStore: MetricStore = require('../app').metricStore;
+    var metricStore: MetricStore = require('../../app').metricStore;
     let data = '';
     req.on('data', (chunk: any) => {
         data += chunk;
@@ -25,14 +25,14 @@ export const metricMiddlewate = (req: any, res: any, next: any) => {
 }
 
 export const dumpNetData = async (req: any, res: any) => {
-    var metricStore: MetricStore = require('../app').metricStore;
+    var metricStore: MetricStore = require('../../app').metricStore;
     const metric: any = await metricStore.dumpNetorkInfo();
     res.json(metric);
     
 }
 
 export const resetMetricData = (req: any, res: any) => {
-    var metricStore: MetricStore = require('../app').metricStore;
+    var metricStore: MetricStore = require('../../app').metricStore;
     metricStore.resetMetrics();
     res.send("success");
 
