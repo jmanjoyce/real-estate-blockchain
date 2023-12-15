@@ -8,9 +8,8 @@ registry_url="https://index.docker.io/v1/"
 
 
 remote_user="amueller"
-#remote_host="13.39.18.95" #root ip #picked a rando one for testing
-test_ip_addresses=("13.40.228.246" "52.47.75.71")
-remote_host=$1 #"13.40.228.246"
+test_ip_addresses=("15.185.38.199" "157.175.85.120" "18.230.184.226" "18.228.224.70") #("13.40.228.246" "52.47.75.71")
+remote_host="13.48.48.239" #"13.40.228.246"
 
 new_ip=""
 ROOT_PORT=8192 #8200?

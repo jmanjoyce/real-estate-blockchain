@@ -7,7 +7,7 @@ registry_url="https://index.docker.io/v1/"
 
 
 remote_user="amueller"
-remote_host=$1 #"13.39.18.95" pass in root IP 
+remote_host="13.48.48.239"
 new_ip=""
 ROOT_PORT=8192 #8200?
 
@@ -23,15 +23,16 @@ do_root_login(){
     docker network create blockchain-network
     echo "create network"
     # Run MongoDB container
-    docker run -d --name mongodb --network blockchain-network -p 8193:27017 mongo &
+    docker pull mongo:latest
+    docker run -d --name mongodb --network blockchain-network -p 8193:27017 mongo 
     echo "mongodb cont run"
     # Root
-    docker run -p $ROOT_PORT:3000 --network blockchain-network -e "PORT=$ROOT_PORT" -e "IP=$remote_host" -e "USER_DB=mongodb:27017" -e "BLOCK_DB=mongodb:27017/root" -e "USER_DB=mongodb:27017" jmanjoyce/blockchain-remote:latest &
+    docker run -p $ROOT_PORT:3000 --network blockchain-network -e "PORT=$ROOT_PORT" -e "IP=$remote_host" -e "USER_DB=mongodb:27017" -e "BLOCK_DB=mongodb:27017/root" jmanjoyce/blockchain-remote:latest &
     echo "run root yay"
     
 }
 
-do_root_login &
+do_root_login
 echo "done root login?"
 
 

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-test_ip_addresses=("13.40.228.246" "52.47.75.71")
+test_ip_addresses=("15.185.38.199" "157.175.85.120" "18.230.184.226" "18.228.224.70")
+#("13.40.228.246" "52.47.75.71")
+#test_ip_addresses=$2
 
 # Docker login credentials
 docker_username="jmanjoyce"
@@ -9,7 +11,7 @@ registry_url="https://index.docker.io/v1/"
 
 
 remote_user="amueller"
-remote_host=$1 #"13.39.18.95" #root ip #picked a rando one for testing
+remote_host="13.48.48.239"#"13.39.18.95" #root ip #picked a rando one for testing
 new_ip=""
 ROOT_PORT=8192 #8200?
 
@@ -27,8 +29,12 @@ do_node_login(){
 
   #run
   #Regular, create block DB?
+  docker pull mongo:latest
+  # Run MongoDB container
+  docker run -d --name mongodb --network blockchain-network -p 8193:27017 mongo &
+
   #docker run -p \$port:3000 --network blockchain-network -e "ROOT_IP=$remote_host" -e "ROOT_PORT=$ROOT_PORT" "IP=\$new_ip" "PORT=\$port"  "BLOCK_DB=mongodb:27017/block" "USER_DB=mongodb:27017" jmanjoyce/blockchain-remote:latest &
-  docker run -p \$port:3000 --network blockchain-network -e "ROOT_IP=$remote_host" -e "ROOT_PORT=$ROOT_PORT" -e "IP=\$new_ip" -e "PORT=\$port" -e "BLOCK_DB=mongodb:27017/block" -e "USER_DB=mongodb:27017" jmanjoyce/blockchain-remote:latest &
+  docker run -p \$port:3000 --network blockchain-network -e "ROOT_IP=$remote_host" -e "ROOT_PORT=$ROOT_PORT" -e "IP=\$new_ip" -e "PORT=\$port" -e "BLOCK_DB=mongodb:27017/block" -e "USER_DB=$remote_host:8193" jmanjoyce/blockchain-remote:latest &
 
   echo "run node"
   docker ps
