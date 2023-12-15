@@ -9,6 +9,7 @@ services:
       - IP=blockchain-root
       - USER_DB=mongodb:27017
       - BLOCK_DB=mongodb:27017/root
+      - NUM_REPLICAS=1
     networks:
       - blockchain-network
 
