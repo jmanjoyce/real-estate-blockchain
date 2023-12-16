@@ -7,15 +7,18 @@ import { confirmMining,
     purchase,
     recieveBroadCast,
     recieveNewBroadCast,
+    removePending,
     replicateTransaction,
     resolveConflicts,
-    startBlockChain} from '../blockchain/blockChainStore'
+    startBlockChain} from '../blockchain/blockChainService'
 import BlockChain from "../blockchain/blockChain";
 
 
 const router = express.Router();
 
-
+/**
+ * basic end point for testing
+ */
 router.get('/', (req, res) => {
     res.send('Basic');
   });
@@ -55,6 +58,11 @@ router.post('/newBroadCast', recieveNewBroadCast);
  * 
  */
 router.post('/broadCast', recieveBroadCast);
+
+/**
+ * 
+ */
+router.post('/removePending', removePending);
 
 
 

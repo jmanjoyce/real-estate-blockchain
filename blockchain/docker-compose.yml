@@ -7,6 +7,9 @@ services:
     environment:
       - PORT=3000
       - IP=blockchain-root
+      - USER_DB=mongodb:27017
+      - BLOCK_DB=mongodb:27017/root
+      - NUM_REPLICAS=1
     networks:
       - blockchain-network
 
@@ -19,6 +22,8 @@ services:
       - ROOT_PORT=3000
       - IP=blockchain1
       - PORT=3000
+      - BLOCK_DB=mongodb:27017/block1_test
+      - USER_DB=mongodb:27017
     networks:
       - blockchain-network
 
@@ -31,8 +36,13 @@ services:
       - ROOT_PORT=3000
       - IP=blockchain2
       - PORT=3000
+      - BLOCK_DB=mongodb:27017/block2_test
+      - USER_DB=mongodb:27017
     networks:
       - blockchain-network
+
+  # blockchain-remote:
+  #   build: .
   
   mongodb:
     image: mongo
@@ -40,8 +50,10 @@ services:
       - "27017:27017"  # Maps host port 27017 to container port 27017 for MongoDB
     networks:
       - blockchain-network
-      
+    volumes:
+      - /Users/jjoyce/Programming/Distributed/FinalProject/p4-final-cool-team-1/blockchain/mongod.conf
 
 networks:
   blockchain-network:
     driver: bridge
+  
