@@ -8,21 +8,22 @@ You also will want to generate a list of ip addresses that are your nodes. You w
 <strong>ORDER OF EVENTS</strong>
 <ol>
 <li>In `docker_stop.sh`, change the remote user variable to be your name, the docker login information to be your own, and the root/ip addresses properly.</li>
-```
-# Docker login credentials
-docker_username="yours"
-docker_password="****"
-registry_url="https://index.docker.io/v1/"
 
+        //Docker login credentials
+        docker_username="yours"
+        docker_password="****"
+        registry_url="https://index.docker.io/v1/"
+        
+        
+        remote_user="urname"
+        test_ip_addresses=(
+            here
+        )
+        
+        
+        remote_host="CHOSEN ROOT IP" 
 
-remote_user="urname"
-test_ip_addresses=(
-    here
-)
-
-remote_host="CHOSEN ROOT IP" 
-
-```
+<ol>
 <li>When this script finished, replace the root IP in startup.sh with your chosen root.</li>
 <li>Once the root is running, replace the root IP in startup.sh with your chosen root, and the ip addresses with your same ones from the stopping script! Voila!</li>
 </ol>
