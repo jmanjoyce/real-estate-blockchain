@@ -18,7 +18,7 @@ class MetricStore {
         const conn: mongoose.Connection = mongoose.createConnection(connectionUrl, {});
         conn.on('error', console.error.bind(console, 'MongoDB connection error:'));
         conn.once('open', () => {
-            console.log('Connected to MongoDB');
+            console.log('Connected to MongoDB Metric');
         });
         const networkEventSchema = new mongoose.Schema<NetworkEvent>({
             timeStamp: { type: Date, required: true },
@@ -28,6 +28,7 @@ class MetricStore {
     }
 
     addEvent(event: NetworkEvent) {
+        console.log('e', event);
         const doc = new this.MetricModel({
             timeStamp: event.timeStamp,
             payloadSize: event.payloadSize,
@@ -36,7 +37,11 @@ class MetricStore {
     }
 
     resetMetrics(){
-        this.MetricModel.deleteMany({});
+        this.MetricModel.deleteMany({}).then(()=> {
+            console.log('reset entries');
+        }).catch(()=>{
+            console.log('error resseting entries');
+        })
     }
 
     async dumpNetorkInfo(): Promise<any>{

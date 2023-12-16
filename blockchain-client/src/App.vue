@@ -66,9 +66,6 @@
               @invalid-address="invalidAddress"
             ></RealEstate>
           </div>
-          <!-- <div class="item">
-      <AddressLookup></AddressLookup>
-    </div> -->
         </div>
       </v-main>
     </v-layout>
@@ -156,17 +153,7 @@ export default defineComponent({
   async mounted() {
     this.refresh();
     console.log(store.state.signedIn);
-    // Get status of all nodes,
-
-    //this.nodes = nodesInfo;
-
-    // Set them on the node info
-
-    // const promises = parsedData.map(data => {
-    //     axios.get
-    //   })
-    //   await Promise.all(promises);
-    //   return [];
+    
   },
 
   methods: {
@@ -282,20 +269,7 @@ export default defineComponent({
     alertUser(alert: Alert) {
       this.alert = alert;
       this.showAlert = true;
-      // this.progress = 100;
-
-      // this.intervalId = setInterval(() => {
-      //   this.progress = this.progress - 1; // Decrease progress every second
-      //   //console.log(this.progress);
-      //   if (this.progress === 0) {
-      //     setInterval(() => {
-      //       this.intervalId = null;
-      //       this.showAlert = false;
-      //     }, 500);
-      //     this.intervalId = null;
-      //     // Hide alert when progress completes
-      //   }
-      // }, 25); // Update progress every 100 milliseconds
+      
       setInterval(() => {
         this.showAlert = false;
       }, 3000);
@@ -450,8 +424,8 @@ export default defineComponent({
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80%; /* Adjust width as needed */
-  z-index: 1000; /* Ensure a higher z-index to make it appear above other elements */
+  width: 80%; 
+  z-index: 1000; 
 }
 
 .top {

@@ -6,7 +6,7 @@ docker_password="thev8.1Torcher.2330"
 registry_url="https://index.docker.io/v1/"
 
 
-remote_user="amueller"
+remote_user="jjoyce"
 remote_host="13.48.48.239"
 new_ip=""
 ROOT_PORT=8192 #8200?

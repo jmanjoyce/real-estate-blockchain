@@ -1,30 +1,10 @@
 
-import { AdressInfoResDto, Block, PeerNode, Status, StatusDto, TransactionData, TransactionWithTimeStamp, ValidPurchaseDto } from '../common';
+import { AdressInfoResDto, Block, NewReplication, PeerNode, Status, StatusDto, TransactionData, TransactionWithTimeStamp, ValidPurchaseDto } from '../common';
 import BlockChain from './blockChain';
 import axios from 'axios';
-//import { Status } from './blockChain';
 import { generateRandomPrice } from './utils';
 import { v4 as uuidv4 } from 'uuid';
-import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
 
-
-
-/**
- * 
- * TODO for part 3
- * In depth testing of mining and replication functionality. This includes synchronization
- * Optional Implementation of stopping machine.
- * 
- * Need to validate pending purchase, can't have same adress already being purchased
- * 
- * Part 3 
- * Need feedback for purchases and validation, need to consider pending purchases.
- * 
- * Part 4, 
- * Make this project a stateless applicatation using mongo
- * 
- * 
- */
 
 
 /**
@@ -145,12 +125,6 @@ export const removePending = async (req: any, res: any) => {
 
 }
 
-/**
- * 
- */
-export const deleteSavedTransactions = () => {
-
-}
 
 /**
  * Function will take new transaction data and replicate it locally.
@@ -179,14 +153,7 @@ export const replicateTransaction = (req: any, res: any) => {
 
 
 
-/**
- * This will just send the current information when a concensus algorithim is started
- * 
- * @param block 
- */
-export const sendChain = (block: BlockChain) => {
 
-}
 
 /**
  * Sends out all the current pending transaction we have
@@ -207,7 +174,7 @@ export const getCurrentPendingTransaction = async (req: any, res: any) => {
  */
 export const recieveBroadCast = (req: any, res: any) => {
     var blockChain = require('../app').blockChain;
-    //console.log('recieving regular broadcast');
+    
     const body = req.body;
     const newNode: PeerNode = {
         ipAddress: body.ipAddress,
@@ -290,7 +257,7 @@ export const getPeerChains = async (peerNodes: PeerNode[]): Promise<Block[][]> =
                         chains.push(block);
                     } catch (err) {
                         console.log('error processing blockchain');
-                        // return [];
+                        
                     }
 
                 } else {
@@ -339,7 +306,7 @@ export const confirmMining = (req: any, res: any) => {
  */
 export const recieveNewBroadCast =async  (req: any, res: any) => {
     var blockChain: BlockChain = require('../app').blockChain;
-    //console.log('recieving new broadcast');
+    
     const knownPeers: PeerNode[] = await blockChain.getPeers();
     res.json(knownPeers);
     const body = req.body;
@@ -373,9 +340,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
     try {
 
         const url = `http://${rootPeer.ipAddress}:${rootPeer.port}/block/newBroadcast`;
-        //console.log(blockChain);
-        // Temp for debugging
-        //console.log('initial broadcast url', url);
+     
         const fetchedNewPeers = await axios.post(url, nodeInfo)
             .then(res => {
                 if (res.status == 200) {
@@ -391,7 +356,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
                 }
             }).catch(error => {
                 console.error("Error getting initial broadcast from nodes ", error);
-                throw error; // Rethrow the error to be caught by the outer try-catch block
+                throw error; 
             });
 
         console.log('fetched peers', fetchedNewPeers);
@@ -399,7 +364,7 @@ export const initialBroadCast = async (blockChain: BlockChain) => {
         if (fetchedNewPeers.length > 0) {
             fetchedNewPeers.forEach(peer => {
                 const url2 = `http://${peer.ipAddress}:${peer.port}/block/broadcast`;
-                //console.log('second url called', url2, peer);
+               
 
                 blockChain.addPeer(peer);
                 axios.post(url2, nodeInfo).catch(error => {
@@ -430,6 +395,8 @@ export const getChain = async (req: any, res: any) => {
 
 
 /**
+ * 
+ * This is the main purchase method.
  * 
  * @param req 
  * @param res 
@@ -513,7 +480,8 @@ export const getStatus = (req: any, res: any) => {
 }
 
 /**
- * Debugging method
+ * Debugging middleware, prints all database information
+ * to the console
  * 
  * @param req 
  * @param res 
@@ -578,6 +546,34 @@ export const validatePurchase = async (req: any, res: any) => {
         valid: result,
     }
     res.json(valid);
-    
-    
+
+}
+
+/**
+ * Service deletes blockchain completely
+ * 
+ * @param req 
+ * @param res 
+ */
+export const resetForTest = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app').blockChain;
+    blockChain.deleteBlock();
+    res.send('success')
+
+
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ */
+export const changeReplication = (req: any, res: any) => {
+    var blockChain: BlockChain = require('../app').blockChain;
+    const newRep: NewReplication = req.body;
+    console.log(newRep.newReplication);
+    blockChain.setNumRep(newRep.newReplication);
+    res.send('success');
+
+
 }

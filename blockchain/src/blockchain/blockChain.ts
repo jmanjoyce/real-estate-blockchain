@@ -8,10 +8,10 @@ const os = require('os');
 
 class BlockChain {
 
-
     node: PeerNode;
     rootNode: PeerNode | undefined;
     status: Status;
+    replicationNum: number;
     private readonly BlockModel: mongoose.Model<Block>;
     private readonly TransactionModel: mongoose.Model<TransactionData>;
     private readonly PeerNodeModel: mongoose.Model<PeerNode>
@@ -52,7 +52,7 @@ class BlockChain {
 
         conn.on('error', console.error.bind(console, 'Block MongoDB connection error:'));
         conn.once('open', () => {
-            console.log('Connected to MongoDB');
+            console.log('Connected to MongoDB Block');
             
             this.PeerNodeModel.deleteMany({}).then(()=>{
                 console.log('Collection cleared');
@@ -63,6 +63,8 @@ class BlockChain {
                 
             
         });
+
+        this.replicationNum = parseInt(process.env.NUM_REPLICAS ?? '1');
 
         this.node = {
             ipAddress: process.env.IP ?? 'localhost',
@@ -144,6 +146,7 @@ class BlockChain {
             try {
                 
                 const promises = transactions.map(transaction => {
+                    // Removes pending transactions
                     const query= {
                         id: transaction.id,
                         pending: true,
@@ -168,8 +171,7 @@ class BlockChain {
 
 
     async addTransaction(data: TransactionData): Promise<string> {
-        console.log('adding transaction');
-        // this.pendingTransactionData.push(data);
+        
         try {
             const existing = await this.TransactionModel.find({
                 address: data.address,
@@ -193,10 +195,11 @@ class BlockChain {
             const peersDoc = await this.PeerNodeModel.find({});
             const peerNodes: PeerNode[] = peersDoc;
             if (peerNodes.length > 0) {
-                // Could use some 
-                const maxReplication = 1; // This could be enviorment variable
+                
+                const maxReplication = this.replicationNum; // This could be enviorment variable
 
                 const numReplication = Math.min(peerNodes.length, maxReplication);
+                console.log('numrep',numReplication);
                 const peerForReplication: PeerNode[] | undefined = pickRandomElements(peerNodes, numReplication);
                 if (peerForReplication) {
                     replicateNewTransaction([data], peerForReplication);
@@ -212,7 +215,7 @@ class BlockChain {
     }
 
     addPeer(newPeer: PeerNode) {
-        // this.peers.push(newPeer);
+        
         const peerDoc = new this.PeerNodeModel({
             ipAddress: newPeer.ipAddress,
             port: newPeer.port
@@ -227,19 +230,17 @@ class BlockChain {
     }
 
     async getPendingTransaction(): Promise<TransactionData[]> {
-        const pendingTran = await this.TransactionModel.find({});
-        console.log("all pending info", pendingTran);
         const pendingRes: TransactionData[] = await this.TransactionModel.find({
             pending: true,
         })
-        console.log("mathced",pendingRes);
+        
         return pendingRes;
     }
 
     async updatePendingTransactions(processedTransactions: TransactionData[]) {
         const promises = processedTransactions.map(async transaction => {
             try {
-                // Update the conditions based on how you identify a transaction (using multiple fields)
+                // query by id
                 const query = {
                     id: transaction.id,
 
@@ -256,7 +257,6 @@ class BlockChain {
         });
         try {
             await Promise.all(promises);
-            console.log('All transactions processed!');
         } catch (error) {
             console.error('Error processing transactions:', error);
         }
@@ -265,17 +265,22 @@ class BlockChain {
 
     }
 
+    setNumRep(numRep: number){
+        this.replicationNum = numRep;
+    }
+
     validateBlock(blockChain: Block[]): boolean {
 
         var lastBlock = blockChain[0];
         let i = 1;
         while (i < blockChain.length) {
             var currBlock = blockChain[i];
+            // Checl valid proof and valid nonce
             const lastHash = BlockChain.hash(lastBlock);
             if (currBlock.previousHash != lastHash) {
                 return false;
             }
-            // Would also need to check valid nonce;
+            
             if (!this.validProof(lastBlock, lastBlock.nonce!)) {
                 return false;
             }
@@ -294,6 +299,11 @@ class BlockChain {
 
     }
 
+    /**
+     * Resolve conflicts is run to synchronize blockchain
+     * 
+     * @returns 
+     */
     async resolveConflicts(): Promise<void> {
 
         return new Promise<void>(async (resolve, reject) => {
@@ -301,7 +311,7 @@ class BlockChain {
                 const peers: PeerNode[] = await this.PeerNodeModel.find({});
                 const peerChains: Block[][] = await getPeerChains(peers);
 
-                //console.log('peer chains', peerChains);
+            
                 let max = await this.BlockModel.countDocuments({});
 
                 let maxI = -1;
@@ -328,7 +338,7 @@ class BlockChain {
                     await Promise.all(promises);
                 }
 
-                resolve(); // Resolve the promise if everything succeeded
+                resolve(); 
             } catch (error) {
                 reject(error); // Reject the promise if there's an error
             }
@@ -401,7 +411,6 @@ class BlockChain {
                         const transactions: TransactionData[] = await this.TransactionModel.find(dupQuery);
                         await this.TransactionModel.deleteMany(dupQuery);
                         const peers:PeerNode[] = await this.PeerNodeModel.find({});
-                        console.log('transactions to be removed', transactions);
                         removePendingTransactionFromPeers(peers, transactions);
                         resolve();
 
@@ -422,9 +431,9 @@ class BlockChain {
     }
 
     async newBlock() {
-        // Get transaction data from neighbors; (maybe) so we don't have to synchronize block
-        console.log('starting mining');
-        console.log('getting new transactions from peers');
+    
+        console.log('STARTED MINING NEW BLOCK');
+       
 
         await this.updateTransactionDataFromPeers();
         await this.resolveConflicts();
@@ -459,14 +468,14 @@ class BlockChain {
             nonce: newNonce
         });
 
-        // Step 3: Update Transaction Status to Non-Pending
+        // Update Transaction Status to Non-Pending
         try {
             // Update the status of pending transactions to non-pending
             await this.TransactionModel.updateMany({ _id: { $in: pendingTransactionsDoc.map(t => t._id) } }, { pending: false });
 
             await newBlock.save();
 
-            console.log('New block created and pending transactions updated.');
+            
         } catch (error) {
             console.error('Error:', error);
         }
@@ -484,9 +493,13 @@ class BlockChain {
         succesfulMine(peers, pendingTransactions);
 
         // Ask one peer to sychronize with us for replication purposes
-        const numSynchronization = 1;
+        const maxReplication = this.replicationNum; 
+
+        const numSynchronization = Math.min(peers.length, maxReplication);
         const peersForSynchronization: PeerNode[] | undefined = pickRandomElements(peers, numSynchronization);
         if (peersForSynchronization) {
+            // We ask chains to synchronize for replication note we do not give them the blockchain
+            // They synchronize themselves
             synchronizeChains(peersForSynchronization);
         }
 
@@ -541,6 +554,19 @@ class BlockChain {
 
     validProof(lastBlock: Block, nonce: string, difficulty: number = 4): boolean {
         return BlockChain.hash(lastBlock, nonce).slice(0, difficulty) === "0".repeat(difficulty)
+    }
+
+    /**
+     * removes all transactions and blocks from blockchain
+     */
+    deleteBlock(){
+        this.BlockModel.deleteMany({}).then(()=>{
+            console.log('deleted blockmodel documents');
+        })
+        this.TransactionModel.deleteMany({}).then(()=> {
+            console.log('deleted transaction model docuemnts');
+        })
+
     }
 
 }

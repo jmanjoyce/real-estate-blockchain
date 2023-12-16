@@ -18,6 +18,10 @@ export interface TransactionData {
     date: Date,
 }
 
+export interface NewReplication {
+    newReplication: number;
+}
+
 export interface PeerNode {
     ipAddress: string,
     port: string,
