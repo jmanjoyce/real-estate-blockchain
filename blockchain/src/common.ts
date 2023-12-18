@@ -1,5 +1,3 @@
-import { Status } from "./blockchain/blockChain";
-import { signIn } from "./blockchain/userStore";
 
 
 export interface Block {
@@ -16,6 +14,12 @@ export interface TransactionData {
     newOwner: string,
     address: string,
     price: number,
+    pending: boolean,
+    date: Date,
+}
+
+export interface NewReplication {
+    newReplication: number;
 }
 
 export interface PeerNode {
@@ -76,4 +80,15 @@ export interface SingInResDto {
     message: string;
     name: string;
     token?: string;
+}
+
+export enum Status {
+    READY,
+    RUNNING,
+    OFFLINE,
+}
+
+export interface TransactionWithTimeStamp{
+    transaction: TransactionData,
+    timeStamp: Date,
 }
