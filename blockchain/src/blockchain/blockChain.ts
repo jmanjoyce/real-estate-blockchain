@@ -311,9 +311,9 @@ class BlockChain {
                 const peers: PeerNode[] = await this.PeerNodeModel.find({});
                 const peerChains: Block[][] = await getPeerChains(peers);
 
-            
+                console.log("retrieved chains", peerChains);
                 let max = await this.BlockModel.countDocuments({});
-
+                console.log("max", max);
                 let maxI = -1;
                 peerChains.forEach((chain: Block[], i) => {
                     if (chain.length > max && this.validateBlock(chain)) {
@@ -324,6 +324,7 @@ class BlockChain {
                 const newChain: Block[] = peerChains[maxI];
 
                 if (newChain) {
+                    console.log("new chain");
 
                     const promises = newChain.map((block: Block) => {
                         const query = {
@@ -378,37 +379,38 @@ class BlockChain {
             this.TransactionModel.aggregate([
                 {
                     $match: {
-                        pending: { $ne: false } 
+                      pending: { $ne: false }
                     }
-                },
-                {
+                  },
+                  {
                     $group: {
-                        _id: '$address',
-                        count: { $sum: 1 },
-                        earliestTimestamp: { $min: '$timestamp' },
-                        docs: { $push: '$$ROOT' }
+                      _id: '$address',
+                      latestTimestamp: { $max: '$timestamp' }, // Get the latest timestamp for each address
+                      docs: { $push: '$$ROOT' }
                     }
-                },
-                {
+                  },
+                  {
                     $project: {
-                        documents: {
-                            $filter: {
-                                input: '$docs',
-                                as: 'doc',
-                                cond: { $ne: ['$$doc.timestamp', '$earliestTimestamp'] }
-                            }
+                      latestDocument: {
+                        $filter: {
+                          input: '$docs',
+                          as: 'doc',
+                          cond: { $eq: ['$$doc.timestamp', '$latestTimestamp'] } // Keep documents with the latest timestamp
                         }
+                      }
                     }
-                },
-                {
-                    $unwind: '$documents'
-                }
+                  },
+                  {
+                    $unwind: '$latestDocument'
+                  }
             ])
                 .then(async results => {
                     const idsToDelete = results.map(item => item.documents._id);
                     try {
                         const dupQuery = { _id: { $in: idsToDelete } };
                         const transactions: TransactionData[] = await this.TransactionModel.find(dupQuery);
+                        console.log('tran',transactions);
+
                         await this.TransactionModel.deleteMany(dupQuery);
                         const peers:PeerNode[] = await this.PeerNodeModel.find({});
                         removePendingTransactionFromPeers(peers, transactions);
@@ -433,10 +435,14 @@ class BlockChain {
     async newBlock() {
     
         console.log('STARTED MINING NEW BLOCK');
-       
 
+        
+       
+        
         await this.updateTransactionDataFromPeers();
         await this.resolveConflicts();
+
+        
 
 
         const getPrevBlock = async (): Promise<Block | undefined> => {
@@ -453,11 +459,19 @@ class BlockChain {
         const newNonce: string = prevBlock ? this.mine(prevBlock) : BlockChain.nonce();
         const previousHash: string = prevBlock ? BlockChain.hash(prevBlock) : "0000";
 
+
+        const transac1 = await this.TransactionModel.find({});
+        console.log('all2', transac1);
+
         await this.checkAndRemoveDuplicateAddress();
+
+        const transac = await this.TransactionModel.find({});
+        console.log('all', transac);
 
 
         const pendingTransactionsDoc = await this.TransactionModel.find({ pending: true });
         const pendingTransactions: TransactionData[] = pendingTransactionsDoc;
+        console.log('p', pendingTransactionsDoc);
 
 
         const newBlock = new this.BlockModel({
@@ -468,10 +482,15 @@ class BlockChain {
             nonce: newNonce
         });
 
+       
         // Update Transaction Status to Non-Pending
         try {
             // Update the status of pending transactions to non-pending
+            const b4 = await this.TransactionModel.find({});
+            console.log('b4', b4);
             await this.TransactionModel.updateMany({ _id: { $in: pendingTransactionsDoc.map(t => t._id) } }, { pending: false });
+            const a3 = await this.TransactionModel.find({});
+            console.log('ba', a3);
 
             await newBlock.save();
 

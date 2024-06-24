@@ -20,7 +20,7 @@ const router = express.Router();
  * basic end point for testing
  */
 router.get('/', (req, res) => {
-    res.send('Basic');
+    res.send('Test');
   });
 
 /**

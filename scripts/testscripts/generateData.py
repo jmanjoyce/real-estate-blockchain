@@ -1,7 +1,10 @@
 
 import json
 import random 
-## Instructions for abby. Create JSON Object for the data. with 
+
+
+#Generates test data for the 
+
 ## [{"name": name, "address": address, "price": price},....]
 ## maybe create 1000 addys, 10000, and 100000 (for now)
 

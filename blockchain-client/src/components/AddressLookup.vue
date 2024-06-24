@@ -52,7 +52,7 @@ export default defineComponent({
 
     // Not stable couldn't get enviorment variables wokring yet.
     console.log(process.env.MAPS_KEY);
-    const key = "AIzaSyAoNhHvaCN2tGTvuFmFnvtOntKEDp6xtAA&libraries";
+    const key = 'YOUR_API_KEY'; // Insert API key
     script.src = `https://maps.googleapis.com/maps/api/js?key=${key}=places`;
     script.async = true;
     script.defer = true;
@@ -120,36 +120,7 @@ export default defineComponent({
   },
 });
 
-//   export default defineComponent(
-//     address: string = '';,
 
-//     mounted() {
-//       const script = document.createElement('script');
-//       script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
-//       script.async = true;
-//       script.defer = true;
-
-//       script.onload = () => {
-//         this.initAutocomplete();
-//       };
-
-//       document.head.appendChild(script);
-//     },
-
-//     initAutocomplete() {
-//       const autocomplete = new google.maps.places.Autocomplete(this.$refs.autocompleteInput.$el, {
-//         types: ['geocode']
-//       });
-
-//       autocomplete.addListener('place_changed', () => {
-//         const place = autocomplete.getPlace();
-//         this.address = place.formatted_address || '';
-//         // Access other place details as needed
-//       });
-//     }
-//   }
-
-//   )
 </script>
 
 <style>
