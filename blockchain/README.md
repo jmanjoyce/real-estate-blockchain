@@ -23,5 +23,3 @@ Root
 Regulars
 ```docker run -p 8192:3000 --network blockchain-network -e "PORT=8192" -e "IP=54.204.131.69" -e "USER_DB=54.82.69.8:8193" -e "ROOT_IP=54.82.69.8" -e "ROOT_PORT=8192" jmanjoyce/blockchain-remote:latest ```
 
-54.204.131.69
-54.82.69.8
