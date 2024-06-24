@@ -12,7 +12,6 @@ To Start up backend pull docker image from registry or pull repo and create a im
 #### Frontend 
 To Start frontend pull docker image from registry or pull repo and create a image using doker compose, more instruction inside blockchain-client readme
 
-
 #### Network 
 To add multiple nodes to the network follow the instructions in the start up script on multiple nodes to coordinate nodes working together.
 
